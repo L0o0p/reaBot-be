@@ -6,9 +6,10 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  Post,
 } from '@nestjs/common';
 import { User } from 'src/users/users.entity';
-import { AuthService } from './auth.service';
+import { AuthService, LoginUserDto } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
@@ -31,5 +32,10 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT) // 设置成功删除时返回的 HTTP 状态码为 204
   async deleteUser(@Body() userDetails: User): Promise<void> {
     await this.usersService.deleteUser(userDetails);
+  }
+// 用户登录
+  @Post('login')
+  async login(@Body() loginUserDto: LoginUserDto) {
+    return this.usersService.login(loginUserDto);
   }
 }

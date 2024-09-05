@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -8,10 +9,12 @@ import {
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { User } from './users.entity';
+import * as bcrypt from 'bcryptjs';
+
 
 export interface CreateUser {
-  email: string;
   username: string;
+  password: string;
 }
 
 @Injectable()
@@ -23,29 +26,39 @@ export class UsersService {
     // get users table repository to interact with the database
     this.userRepository = this.dataSource.getRepository(User);
   }
-  //  create handler to create new user and save to the database
-  async createUser(createUser: CreateUser): Promise<User> {
-    try {
-      const user = await this.userRepository.create(createUser);
-      return await this.userRepository.save(user);
-    } catch (err) {
-      if (err.code == 23505) {
-        this.logger.error(err.message, err.stack);
-        throw new HttpException('Username already exists', HttpStatus.CONFLICT);
-      }
-      this.logger.error(err.message, err.stack);
-      throw new InternalServerErrorException(
-        'Something went wrong, Try again!',
-      );
+  // 注册用户
+  async register(createUserDto: CreateUser) {
+    const { username, password } = createUserDto;
+    const existUser = await this.findByUsername(username);
+    if (existUser) {
+      throw new BadRequestException('注册用户已存在');
     }
+
+    const user = {
+      ...createUserDto,
+      password: encryptPwd(password), // 保存加密后的密码
+    };
+
+    return await this.create(user);
   }
-  // Method to retrieve a user by username
-  async getUserByUsername(username: string): Promise<User> {
-    const user = await this.userRepository.findOneBy({ username });
-    if (!user) {
-      this.logger.error(`User not found: ${username}`);
-      throw new NotFoundException(`User with username '${username}' not found`);
-    }
-    return user;
+
+  // 创建用户
+  async create(user: CreateUser) {
+    const { username } = user;
+    await this.userRepository.save(user);
+    return await this.userRepository.findOne({
+      where: { username },
+    });
   }
+
+  // 根据用户名搜索
+  async findByUsername(username: string): Promise<User | undefined> {
+    return await this.userRepository.findOne({ where: { username } });
+  }
+
 }
+
+// 哈希密码
+export const encryptPwd = (password) => {
+  return bcrypt.hashSync(password, 10);
+};

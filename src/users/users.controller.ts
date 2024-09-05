@@ -8,12 +8,13 @@ export class UsersController {
   @Post('/create')
   //   handles the post request to /users/create endpoint to create new user
   async signUp(@Body() user: CreateUser) {
-    return await this.userService.createUser(user);
+    return await this.userService.register(user);
   }
   @Get('/profile')
   //   handles the post request to /users/create endpoint to create new user
   async gerProfile(@Request() req) {
     console.log(req.username);
-    return await this.userService.getUserByUsername(req.username);
+    return await this.userService.findByUsername(req.username);
   }
 }
+

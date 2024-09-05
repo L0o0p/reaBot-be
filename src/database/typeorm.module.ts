@@ -18,7 +18,7 @@ import { User } from 'src/users/users.entity';
             port: 3306,
             username: 'root',
             password: 'sgy12345',
-            database: 'lot',
+            database: 'read-bot',
             // entities: [User],
             synchronize: true,
             entities: [`${__dirname}/../**/**.entity{.ts,.js}`], // this will automatically load all entity file in the src folder
