@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Res,
 } from '@nestjs/common';
 import { User } from 'src/users/users.entity';
 import { AuthService, LoginUserDto } from './auth.service';
@@ -35,7 +36,7 @@ export class AuthController {
   }
 // 用户登录
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto) {
+  async login(@Body() loginUserDto: LoginUserDto, ) {
     return this.usersService.login(loginUserDto);
   }
 }

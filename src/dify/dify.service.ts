@@ -10,6 +10,7 @@ import { Dify } from './dify.entity';
 import { User } from 'src/users/users.entity';
 import { information } from './dify.dto';
 import axios from 'axios';
+import { get } from 'http';
 
 @Injectable()
 export class DifyService {
@@ -23,33 +24,32 @@ export class DifyService {
   }
 
   async sendInfo(info: information, user: { userId: number, username: string }) {
-    console.log("user@#$", user.userId);
-
     // userId -> User
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
     console.log('user_found', user_found);
-
     const url = 'https://dify.cyte.site:2097/v1/chat-messages';
     const apiKey = 'app-8rXZUovD1x6yBACSZBW9JICy';  // 使用正确的API密钥
     const headers = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     };
-    let cvsId = '';  // 初始化 conversation_id
+
+    const userID = `readbotuser-${user.userId}`
+    let cid = user_found.conversation_id || '';
     const body = {
       inputs: {},
       query: info.information,  // 确保这里是正确的信息字段
       response_mode: "blocking",
-      conversation_id: '',
-      user: "abc-123",
+      conversation_id: cid,
+      user: userID,
     };
+    console.log(JSON.stringify(body, null, 2));
 
     // 等待 postData 方法返回结果
     const { conversation_id, answer } = await this.postData(url, body, headers);
-    cvsId = conversation_id
-    this.createConversation(cvsId, user_found)
+    this.updateUserConversation(conversation_id, user_found)
     // 根据业务需求调整返回值
-    return { cvsId, answer };
+    return { conversation_id, answer };
   }
 
   async postData(url, body, headers) {
@@ -66,7 +66,10 @@ export class DifyService {
       throw new InternalServerErrorException('无法发送信息到 Dify 服务器');
     }
   }
-  async createConversation(cvsId: string, user: User): Promise<void> {
+
+
+  // 给用户创建新的conversation_id
+  async updateUserConversation(cvsId: string, user: User): Promise<void> {
     try {
       user.conversation_id = cvsId;
       await this.userRepository.save(user);
@@ -80,13 +83,19 @@ export class DifyService {
     console.log('id', user.userId);
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
     console.log('user_found', user_found);
+    const userID = `readbotuser-${user.userId}`
 
-    const username = 'abc-123'
+    const username = userID
     const conversationId = user_found.conversation_id; // 如果 conversation_id 有具体值，请填写在这里
-    const url = `https://dify.cyte.site:2097/v1/messages?user=${username}&conversation_id=${conversationId}`;
+    console.log('找到对应的conversationId', conversationId);
+    const url = `https://dify.cyte.site:2097/v1/messages?user=${username}&conversation_id=${conversationId}&limit=100&first_id=`;
     const apiKey = 'app-8rXZUovD1x6yBACSZBW9JICy'; // Replace 'YOUR_API_KEY' with your actual API key
+    return this.fetchData(url, apiKey)
 
-    fetch(url, {
+  }
+
+  async fetchData(url, apiKey) {
+    return fetch(url, {
       method: 'GET', // 指定请求方法为 GET
       headers: {
         'Authorization': `Bearer ${apiKey}` // 设置授权头，使用提供的 API 密钥
@@ -99,11 +108,9 @@ export class DifyService {
         }
         return response.json(); // 解析 JSON 数据
       })
-      .then(data => {
-        console.log(data); // 在控制台输出获取的数据
-      })
       .catch(error => {
         console.error('There was a problem with your fetch operation:', error); // 在控制台输出可能出现的错误
-      })
+        throw error; // 将错误向上抛出，以便调用者可以处理
+      });
   }
 }

@@ -13,7 +13,7 @@ export class UsersController {
   @Get('/profile')
   //   handles the post request to /users/create endpoint to create new user
   async gerProfile(@Request() req) {
-    console.log(req.username);
+    // console.log(req.username);
     return await this.userService.findByUsername(req.username);
   }
 }

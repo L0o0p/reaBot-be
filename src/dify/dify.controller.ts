@@ -11,14 +11,14 @@ export class DifyController {
   @UseGuards(JwtAuthGuard)
   @Post('/send')
   async sendInformation(@Body() info: information,  @Req() req: any & {user: { id: number, username: string}}) {
-    console.log("reqds",req.user.user);
+    // console.log("reqds",req.user.user);
     return await this.appService.sendInfo(info, req.user.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('/chatlog')
   async getChatlog( @Req() req: any & {user: { id: number, username: string}}){
-    return await this.appService.getChatlog(req.user.user);
+    return this.appService.getChatlog(req.user.user);
   }
 
 }

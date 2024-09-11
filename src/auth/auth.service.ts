@@ -144,7 +144,7 @@ function comparePwd(password: string, hashPwd: string): boolean {
     return false;
   }
   // 示例：使用bcrypt进行密码比较
-  console.log('password', password, 'encryptPwd', hashPwd);
+  // console.log('password', password, 'encryptPwd', hashPwd);
   // console.log(password === encryptPwd);
   return bcrypt.compareSync(password, hashPwd);
   // return password === encryptPwd;

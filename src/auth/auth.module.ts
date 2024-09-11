@@ -15,7 +15,7 @@ const jwtModule = JwtModule.registerAsync({
   useFactory: async (configService: ConfigService) => {
     return {
       secret: configService.get(jwtConstants.secret),
-      signOptions: { expiresIn: '10min' }, // 设置token过期时间
+      signOptions: { expiresIn: '4h' }, // 设置token过期时间
     };
   },
 });
