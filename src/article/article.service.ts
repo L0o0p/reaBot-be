@@ -8,6 +8,7 @@ import {
 import { DataSource } from 'typeorm';
 import { Article } from './article.entity';
 import { CreateArticle } from './article.dto';
+import { response } from 'express';
 
 @Injectable()
 export class ArticleService {
@@ -56,27 +57,57 @@ export class ArticleService {
     }
   }
 
-    // 查询指定用户信息
-    async getArticleById(title: string): Promise<Article> {
-      try {
-        const article = await this.articleRepository.findOneBy({ title });
-        if (!article) {
-          throw new NotFoundException(`Article with title ${title} not found`);
+  // 查询指定文章信息
+  async getArticleById(title: string): Promise<Article> {
+    try {
+      const article = await this.articleRepository.findOneBy({ title });
+      if (!article) {
+        throw new NotFoundException(`Article with title ${title} not found`);
+      }
+      return article;
+    } catch (err) {
+      this.logger.error(
+        `Failed to find Article by title ${title}: ${err.message}`,
+        err.stack,
+      );
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new InternalServerErrorException(
+        'Something went wrong, Try again!',
+      );
+    }
+  }
+
+  // 获取dify知识库
+  async fetchDifyLibrary() {
+    const url = 'https://dify.cyte.site:2097/v1/datasets?page=1&limit=20';
+    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg'//知识库的key
+    try {
+      // 使用 fetch 发送 GET 请求
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
         }
-        return article;
-      } catch (err) {
-        this.logger.error(
-          `Failed to find Article by title ${title}: ${err.message}`,
-          err.stack,
-        );
-        if (err instanceof NotFoundException) {
-          throw err;
-        }
-        throw new InternalServerErrorException(
-          'Something went wrong, Try again!',
-        );
+      });
+
+      // 检查响应状态
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // 解析 JSON 数据
+      const data = await response.json();
+      console.log(data); // 在控制台输出获取的数据
+      return data
+    } catch (error) {
+      console.error('There was an error!', error);
+      if (response) {
+        console.log("Response status:", response.status);
       }
     }
+  }
 
 }
 

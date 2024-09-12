@@ -23,6 +23,7 @@ export class DifyService {
     this.userRepository = this.dataSource.getRepository(User);
   }
 
+  // 发送对话消息
   async sendInfo(info: information, user: { userId: number, username: string }) {
     // userId -> User
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
@@ -51,7 +52,7 @@ export class DifyService {
     // 根据业务需求调整返回值
     return { conversation_id, answer };
   }
-
+  // 发送对话消息- 执行方法
   async postData(url, body, headers) {
     try {
       const response = await axios.post(url, body, { headers });
@@ -67,7 +68,6 @@ export class DifyService {
     }
   }
 
-
   // 给用户创建新的conversation_id
   async updateUserConversation(cvsId: string, user: User): Promise<void> {
     try {
@@ -78,6 +78,7 @@ export class DifyService {
       throw new InternalServerErrorException('更新用户对话ID失败');
     }
   }
+  //给获取当前用户的聊天历史记录
   async getChatlog(user: { userId: number, username: string }) {
     // userId -> User
     console.log('id', user.userId);
@@ -93,7 +94,7 @@ export class DifyService {
     return this.fetchData(url, apiKey)
 
   }
-
+  //给获取当前用户的聊天历史记录-执行方法
   async fetchData(url, apiKey) {
     return fetch(url, {
       method: 'GET', // 指定请求方法为 GET

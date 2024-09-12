@@ -11,16 +11,22 @@ export class ArticleController {
   async signUpArticle(@Body() user: CreateArticle) {
     return await this.appService.register(user);
   }
+  // 获取所有dify知识库
+  @Get('/library')
+  async getDifyLibrary() {
+    return this.appService.fetchDifyLibrary();
+  }
+  // 根据 ID 获取本地存储的文章
+  // @Get(':title')
+  // async getUserById(@Param('title') title: string): Promise<Article> {
+  //   return this.appService.getArticleById(title);
+  // }
 
-    // 根据 ID 获取文章
-    @Get(':title')
-    async getUserById(@Param('title') title: string): Promise<Article> {
-      return this.appService.getArticleById(title);
-    }
+  // 获取所有本地存储的文章
+  @Get()
+  async getAllArticle(): Promise<Article[]> {
+    return this.appService.getAllArticle();
+  }
 
-   // 获取所有文章
-   @Get()
-   async getAllArticle(): Promise<Article[]> {
-     return this.appService.getAllArticle();
-   }
+
 }

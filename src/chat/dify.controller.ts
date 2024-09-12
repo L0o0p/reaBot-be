@@ -5,7 +5,7 @@ import { Dify } from './dify.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { User } from 'src/users/users.entity';
 
-@Controller('dify')
+@Controller('chat')
 export class DifyController {
   constructor(private readonly appService: DifyService) { }
   @UseGuards(JwtAuthGuard)
