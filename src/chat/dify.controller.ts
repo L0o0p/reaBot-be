@@ -7,12 +7,20 @@ import { User } from 'src/users/users.entity';
 
 @Controller('chat')
 export class DifyController {
-  constructor(private readonly appService: DifyService) { }
+
+  constructor(private readonly appService: DifyService) {
+    // const current_database_id = this.appService.getCurrentDatabaseId();
+  }
   @UseGuards(JwtAuthGuard)
   @Post('/send')
   async sendInformation(@Body() info: information,  @Req() req: any & {user: { id: number, username: string}}) {
     // console.log("reqds",req.user.user);
     return await this.appService.sendInfo(info, req.user.user);
+  }
+  @Get('/articleUsedByBot')
+  async getBottest() {
+    const library_id = await this.appService.fetchBotInfo() as unknown as string
+    return this.appService.getArticleName(library_id)
   }
 
   @UseGuards(JwtAuthGuard)

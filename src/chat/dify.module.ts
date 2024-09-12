@@ -6,6 +6,4 @@ import { DifyService } from './dify.service';
   providers: [DifyService],
   controllers: [DifyController]
 })
-export class DifyModule {
-  import: [];
-}
+export class DifyModule {}

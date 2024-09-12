@@ -16,11 +16,24 @@ export class ArticleController {
   async getDifyLibrary() {
     return this.appService.fetchDifyLibrary();
   }
+
+  // 获取所有dify知识库文档列表
+  @Get('/library/files')
+  async getDifyLibraryFiles() {
+    return this.appService.fetchDifyLibraryFiles();
+  }
+
+  // 获取所有dify知识库文档列表中对应的文章
+  @Get('/propertyArticle')
+  async getPropertyArticle() {
+    return this.appService.getPropertyArticle();
+  }
+
   // 根据 ID 获取本地存储的文章
-  // @Get(':title')
-  // async getUserById(@Param('title') title: string): Promise<Article> {
-  //   return this.appService.getArticleById(title);
-  // }
+  @Get(':title')
+  async getUserById(@Param('title') title: string): Promise<Article> {
+    return this.appService.getArticleById(title);
+  }
 
   // 获取所有本地存储的文章
   @Get()
