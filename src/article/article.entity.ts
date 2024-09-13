@@ -10,4 +10,7 @@ export class Article {
 
   @Column('longtext')
   content: string;
+
+  @Column()
+  library_id: string;
 }

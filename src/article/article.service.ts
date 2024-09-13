@@ -11,6 +11,7 @@ import { CreateArticle } from './article.dto';
 import { response } from 'express';
 import { log } from 'console';
 import { DifyService } from 'src/chat/dify.service';
+import axios from 'axios';
 
 @Injectable()
 export class ArticleService {
@@ -25,14 +26,17 @@ export class ArticleService {
     this.articleRepository = this.dataSource.getRepository(Article);
   }
   // 注册文章
-  async register(createArticleDto: CreateArticle) {
+  async register(createArticleDto: CreateArticle, library_id: string) {
     const { title, content } = createArticleDto;
     const existArticle = await this.findByArticleTitle(title);
     if (existArticle) {
       throw new BadRequestException('注册文章已存在');
     }
+    const article = {
+      ...createArticleDto,
+      library_id: library_id, // 保存加密后的密码
+    };
 
-    const article = createArticleDto
 
     return await this.create(article);
   }
@@ -152,6 +156,83 @@ export class ArticleService {
     const article_name = articleName.split('.')[0];
     const propertyArticle = this.getArticleById(article_name)
     return propertyArticle
+  }
+  // 创建dify知识库（空）
+  async createLibrary(createArticleDto: CreateArticle) {
+    const rootUrl = 'https://dify.cyte.site:2097/v1'
+    const url = `${rootUrl}/datasets`
+    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg';  // 知识库密钥
+
+    const options = {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: createArticleDto.title
+      })
+    };
+
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data; // 返回API响应数据
+    } catch (error) {
+      console.error('Error:', error);
+      throw error; // 重新抛出错误允许调用者处理它
+    }
+  }
+  // 在给定id的知识库中创建新文档
+  async createLibraryArticle(id: string, createArticleDto: CreateArticle) {
+    const datasetId = id; // Replace {dataset_id} with your actual dataset ID
+    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg'; // Replace {api_key} with your actual API key
+    const rootUrl = 'https://dify.cyte.site:2097/v1'
+    const url = `${rootUrl}/datasets/${datasetId}/document/create_by_text`;
+
+    const options = {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": 'application/json'
+      },
+      body: JSON.stringify({
+        name: createArticleDto.title,
+        text: createArticleDto.content,
+        indexing_technique: "high_quality",
+        process_rule: { "mode": "automatic" }
+      })
+    };
+
+    fetch(url, options)
+      .then(response => response.json())
+      .then(result => console.log(result))
+      .catch(error => console.error('Error:', error));
+  };
+  async deletDifyLibrary(dataset_id: string) {
+    const url = `http://dify.cyte.site/v1/datasets/${dataset_id}`
+    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg';
+    const options = {
+      method: 'DELET',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": 'application/json'
+      },
+    };
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data; // 返回API响应数据
+    } catch (error) {
+      console.error('Error:', error);
+      throw error; // 重新抛出错误允许调用者处理它
+    }
   }
 }
 
