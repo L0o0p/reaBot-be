@@ -6,6 +6,7 @@ import { User } from './users/users.entity';
 import { AuthModule } from './auth/auth.module';
 import { ArticleModule } from './article/article.module';
 import { DifyModule } from './chat/dify.module';
+import { LockModule } from './lock/lock.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { DifyModule } from './chat/dify.module';
     UsersModule,
     AuthModule,
     ArticleModule,
-    DifyModule
+    DifyModule,
+    LockModule
   ],
 })
 export class AppModule {}
