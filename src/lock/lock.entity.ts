@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class Lock {
+export class Component_lock {
   @PrimaryGeneratedColumn()
   id: number;
 

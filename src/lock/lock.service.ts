@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { createLocksDto } from './lock.controller';
-import { Lock } from './lock.entity';
+import { Component_lock } from './lock.entity';
 
 
 @Injectable()
@@ -17,7 +17,7 @@ export class LockService {
   constructor(
     private dataSource: DataSource,
   ) {
-    this.locksRepository = this.dataSource.getRepository(Lock);
+    this.locksRepository = this.dataSource.getRepository(Component_lock);
   }
   // 创建密码组
   async create(locks: createLocksDto) {
@@ -34,7 +34,7 @@ export class LockService {
     const id = 1
     const existLocks = await this.locksRepository.findOne({ where: { id } })
     if (!existLocks) {
-      throw new Error('User not found');
+      throw new Error('the Component_lock code not found');
     }
     existLocks.questionLock = questionLock;
     existLocks.chatLock = chatLock;
@@ -58,23 +58,27 @@ export class LockService {
  * @returns
  */
   async validateQuestionLock(questionLock: string) {
+    let feedback = "验证码正确！";
     const existUser = await this.locksRepository.findOne({ where: { questionLock } });
+    console.log('existUser', existUser);
+
     if (!existUser) {
-      throw new BadRequestException('密码不正确');
+      feedback = "密码不正确"
+      // throw new BadRequestException(feedback);
     }
-    const s = '验证通过'
-    return s;
+    return feedback;
   }
 
   async validateChatLock(chatLock: string) {
-    console.log('chuarn', chatLock);
-
+    let feedback = "验证码正确！";
     const existUser = await this.locksRepository.findOne({ where: { chatLock } });
+    console.log('existUser', existUser);
+
     if (!existUser) {
-      throw new BadRequestException('密码不正确');
+      feedback = "密码不正确"
+      // throw new BadRequestException(feedback);
     }
-    const s = '验证通过'
-    return s;
+    return feedback;
   }
 
   // 根据用户名搜索

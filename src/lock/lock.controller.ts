@@ -6,7 +6,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { LockService } from './lock.service';
-import { Lock } from './lock.entity';
+import { Component_lock } from './lock.entity';
 
 export interface createLocksDto {
   questionLock: string;
@@ -38,13 +38,12 @@ export class LockController {
 
   @Post('questionLock_validate')
   async validateQuestionLock(@Body() questionLock,) {
-    const use = questionLock.questionLock
-    return this.appService.validateQuestionLock(use);
+    console.log('questionLock',questionLock.chatLock);
+    return this.appService.validateQuestionLock(questionLock.chatLock);
   }
   @Post('chatLock_validate')
   async validateChatLock(@Body() chatLock,) {
     console.log('chatLock',chatLock.chatLock);
-    const use = chatLock.chatLock
-    return this.appService.validateChatLock(use);
+    return this.appService.validateChatLock(chatLock.chatLock);
   }
 }
