@@ -13,4 +13,7 @@ export class User {
 
   @Column({ nullable: true })
   conversation_id: string;
+
+  @Column({ nullable: true, default: true })
+  anim_permission: boolean;
 }

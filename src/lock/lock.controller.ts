@@ -4,9 +4,12 @@ import {
   Param,
   Body,
   Post,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { LockService } from './lock.service';
 import { Component_lock } from './lock.entity';
+import { JwtAuthGuard } from 'src/auth/jwt.guard';
 
 export interface createLocksDto {
   questionLock: string;
@@ -31,19 +34,24 @@ export class LockController {
     return this.appService.create(createLocksDto);
   }
   // 更新密码
+  @UseGuards(JwtAuthGuard)
   @Post('update')
-  async updateLocks(@Body() createLocksDto: createLocksDto,) {
+  async updateLocks(@Body() createLocksDto: createLocksDto, @Req() req: any & { user: { anim_permission: boolean } }) {
+    if (!req.user.anim_permission) {
+      const feedback = '你没有权限进行该操作'
+      return feedback
+    }
     return this.appService.update(createLocksDto);
   }
 
   @Post('questionLock_validate')
   async validateQuestionLock(@Body() questionLock,) {
-    console.log('questionLock',questionLock.chatLock);
+    console.log('questionLock', questionLock.chatLock);
     return this.appService.validateQuestionLock(questionLock.chatLock);
   }
   @Post('chatLock_validate')
   async validateChatLock(@Body() chatLock,) {
-    console.log('chatLock',chatLock.chatLock);
+    console.log('chatLock', chatLock.chatLock);
     return this.appService.validateChatLock(chatLock.chatLock);
   }
 }
