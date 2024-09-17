@@ -5,6 +5,7 @@ import { Dify } from './dify.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { User } from 'src/users/users.entity';
 
+@UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class DifyController {
 
@@ -12,7 +13,6 @@ export class DifyController {
     // const current_database_id = this.appService.getCurrentDatabaseId();
   }
   // 发送聊天消息
-  @UseGuards(JwtAuthGuard)
   @Post('/send')
   async sendInformation(@Body() info: information, @Req() req: any & { user: { id: number, username: string } }) {
     // console.log("reqds",req.user.user);
@@ -49,7 +49,6 @@ export class DifyController {
     }
   }
   // 获取聊天记录
-  @UseGuards(JwtAuthGuard)
   @Get('/chatlog')
   async getChatlog(@Req() req: any & { user: { id: number, username: string } }) {
     return this.appService.getChatlog(req.user.user);

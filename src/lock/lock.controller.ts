@@ -8,7 +8,6 @@ import {
   Req,
 } from '@nestjs/common';
 import { LockService } from './lock.service';
-import { Component_lock } from './lock.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 
 export interface createLocksDto {
@@ -16,6 +15,7 @@ export interface createLocksDto {
   chatLock: string
 }
 
+@UseGuards(JwtAuthGuard)
 @Controller('lock')
 export class LockController {
   constructor(private readonly appService: LockService) { }
@@ -34,13 +34,14 @@ export class LockController {
     return this.appService.create(createLocksDto);
   }
   // 更新密码
-  @UseGuards(JwtAuthGuard)
   @Post('update')
   async updateLocks(@Body() createLocksDto: createLocksDto, @Req() req: any & { user: { anim_permission: boolean } }) {
     if (!req.user.anim_permission) {
       const feedback = '你没有权限进行该操作'
       return feedback
     }
+    console.log('权限',req.user.anim_permission);
+    
     return this.appService.update(createLocksDto);
   }
 
