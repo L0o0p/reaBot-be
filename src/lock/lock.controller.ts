@@ -35,13 +35,7 @@ export class LockController {
   }
   // 更新密码
   @Post('update')
-  async updateLocks(@Body() createLocksDto: createLocksDto, @Req() req: any & { user: { anim_permission: boolean } }) {
-    if (!req.user.anim_permission) {
-      const feedback = '你没有权限进行该操作'
-      return feedback
-    }
-    console.log('权限',req.user.anim_permission);
-    
+  async updateLocks(@Body() createLocksDto: createLocksDto) {
     return this.appService.update(createLocksDto);
   }
 

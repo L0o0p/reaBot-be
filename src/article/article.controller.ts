@@ -15,13 +15,12 @@ export class ArticleController {
   // }
   // 上传文件以创建dify知识库
   @Post('/upload')
-  async upload_dify(@Body() article: CreateArticle, @Req() req: any & { user: { anim_permission: boolean } }) {
+  async upload_dify(@Body() article: CreateArticle) {
     // 鉴权
-    if (!req.user.anim_permission) {
-      const feedback = '你没有权限进行该操作'
-      return feedback
-    }
-
+    // if (!req.user.anim_permission) {
+    //   const feedback = '你没有权限进行该操作'
+    //   return feedback
+    // }
     const data = await this.appService.createLibrary(article) // 使用上传内容创建空知识库
     const id = data.id // 新知识库的id
     console.log('id', id);
@@ -41,12 +40,12 @@ export class ArticleController {
   }
   // 删除知识库
   @Post(':dataset_id')
-  async deletLibrary(@Param('dataset_id') dataset_id: string, @Req() req: any & { user: { anim_permission: boolean } }) {
+  async deletLibrary(@Param('dataset_id') dataset_id: string) {
     // 鉴权
-    if (!req.user.anim_permission) {
-      const feedback = '你没有权限进行该操作'
-      return feedback
-    }
+    // if (!req.user.anim_permission) {
+    //   const feedback = '你没有权限进行该操作'
+    //   return feedback
+    // }
 
     return this.appService.deletDifyLibrary(dataset_id);
   }
