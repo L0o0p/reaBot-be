@@ -30,12 +30,7 @@ export class ArticleController {
   }
   // 获取所有dify知识库
   @Get('/library')
-  async getDifyLibrary(@Req() req: any & { user: { anim_permission: boolean } }) {
-    if (!req.user.anim_permission) {
-      const feedback = '你没有权限进行该操作'
-      return feedback
-    }
-
+  async getDifyLibrary() {
     return this.appService.fetchDifyLibrary();
   }
   // 删除知识库
