@@ -1,21 +1,34 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { Article } from './article.entity';
+import { Article } from './entities/article.entity';
 import { CreateArticle } from './article.dto';
 import { response } from 'express';
 import { log } from 'console';
 import { DifyService } from 'src/chat/dify.service';
 import axios from 'axios';
-
+import * as fs from 'fs';
+import * as mammoth from 'mammoth';
+import { DocFile } from './entities/docFile.entity';
+interface MammothMessage {
+  type: string; // 'error' | 'warning' 等
+  message: string;
+}
+interface MammothTextResult {
+  value: string;
+  messages: MammothMessage[];
+}
 @Injectable()
 export class ArticleService {
   private articleRepository;
+  private docFileRepository;
   private logger = new Logger();
   //   inject the Datasource provider
   constructor(
@@ -24,6 +37,7 @@ export class ArticleService {
   ) {
     // get Article table repository to interact with the database
     this.articleRepository = this.dataSource.getRepository(Article);
+    this.docFileRepository = this.dataSource.getRepository(DocFile);
   }
   // 注册文章
   async register(createArticleDto: CreateArticle, library_id: string) {
@@ -34,19 +48,19 @@ export class ArticleService {
     }
     const article = {
       ...createArticleDto,
-      library_id: library_id, // 保存加密后的密码
+      library_id: library_id,
     };
-
-
     return await this.create(article);
   }
 
   // 创建文章
   async create(article: CreateArticle) {
-    const { title } = article;
+    if (!article.title) {
+      throw new HttpException('Article title is required', HttpStatus.BAD_REQUEST);
+    }
     await this.articleRepository.save(article);
-    return await this.articleRepository.findOne({
-      where: { title },
+    return this.articleRepository.findOne({
+      where: { title: article.title },
     });
   }
 
@@ -158,7 +172,7 @@ export class ArticleService {
     return propertyArticle
   }
   // 创建dify知识库（空）
-  async createLibrary(createArticleDto: CreateArticle) {
+  async createLibrary(article_title: string) {
     const rootUrl = 'https://dify.cyte.site:2097/v1'
     const url = `${rootUrl}/datasets`
     const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg';  // 知识库密钥
@@ -170,7 +184,7 @@ export class ArticleService {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: createArticleDto.title
+        name: article_title
       })
     };
 
@@ -209,7 +223,7 @@ export class ArticleService {
 
     fetch(url, options)
       .then(response => response.json())
-      .then(result => console.log(result))
+      .then(result => console.log('result:', result))
       .catch(error => console.error('Error:', error));
   };
   async deletDifyLibrary(dataset_id: string) {
@@ -233,6 +247,93 @@ export class ArticleService {
       console.error('Error:', error);
       throw error; // 重新抛出错误允许调用者处理它
     }
+  }
+
+  // 通过接收前端的doc文档创建dify知识库
+  async createLibraryByDoc(file: Express.Multer.File, id: string) {
+    const datasetId = id
+    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg';
+    const form = new FormData();
+    // 将 JSON 对象转换为字符串并添加到 FormData
+    const jsonData = JSON.stringify({
+      indexing_technique: 'high_quality',
+      process_rule: {
+        rules: {
+          pre_processing_rules: [
+            { id: 'remove_extra_spaces', enabled: true },
+            { id: 'remove_urls_emails', enabled: true }
+          ],
+          segmentation: {
+            separator: '###',
+            max_tokens: 500
+          }
+        },
+        mode: 'custom'
+      }
+    });
+    form.append('data', jsonData);
+    // const r = file.buffer.buffer;
+    // file to blob
+    const blob = new Blob([file.buffer.buffer], { type: 'application/json' });
+
+    form.append('file', blob, file.originalname);
+
+    try {
+      const response = await axios.post(`https://dify.cyte.site:2097/v1/datasets/${datasetId}/document/create_by_file`, form, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+      console.log('Success:', response.data);
+    } catch (error: any) {
+      console.error('Error:', error.response ? error.response.data : error.message);
+    }
+    return true
+  }
+
+  //接收前端doc文档并且读取
+  async uploadFileToRead(file: Express.Multer.File) {
+    try {
+      const result = await mammoth.extractRawText({ buffer: file.buffer });
+      const textResult: MammothTextResult = {
+        value: result.value,
+        messages: result.messages.map(msg => ({
+          type: msg.type,
+          message: msg.message
+        }))
+      };
+      return textResult.value;
+    } catch (error) {
+      throw new HttpException('Error processing file', HttpStatus.BAD_REQUEST);
+    }
+  }
+  //接收前端doc文档并存储在本地数据库
+  async saveFile(file: Express.Multer.File): Promise<File> {
+    const match_article = file.originalname.split('.')[0]; // 用doc名称命名
+    console.log('match_article:', match_article);
+    let existArticle = await this.findByArticleTitle(match_article);
+    if (!existArticle) {
+      console.log('不存在同名文章');
+      const article = {
+        title: match_article || 'article_created_by_doc',
+        content: 'created by doc'
+      };
+      existArticle = await this.create(article);
+      console.log('创建文章成功');
+    }
+    console.log('existArticle:', existArticle);
+    // 存在的话直接在link中创建
+    const newFile = this.docFileRepository.create({
+      name: file.originalname,
+      type: file.mimetype,
+      size: file.size,
+      content: file.buffer,
+      article: existArticle,
+    });
+    console.log('newFile:', newFile);
+
+    return this.docFileRepository.save(newFile);
   }
 }
 

@@ -1,18 +1,45 @@
-import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticle } from './article.dto';
-import { Article } from './article.entity';
+import { Article } from './entities/article.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+
+
 
 @UseGuards(JwtAuthGuard)
 @Controller('article')
 export class ArticleController {
   constructor(private readonly appService: ArticleService) { }
-  // 上传文章（本地存储+创建dify知识库+返回library_id给本地数据库）
-  // @Post('/upload')
-  // async signUpArticle(@Body() article: CreateArticle) {
-  //   return await this.appService.register(article);
-  // }
+    // 接受文档并且存储再本地数据库
+    @Post('doc_store')
+    @UseInterceptors(FileInterceptor('file'))
+    async uploadFileStore(@UploadedFile() file: Express.Multer.File) {
+      throw new Error('Method not implemented.');
+      // return this.appService.saveFile(file);
+    }
+  // 接受文档并且创建知识库
+  @Post('doc_dify')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFileTodify(@UploadedFile() file: Express.Multer.File) {
+    // throw new Error('Method not implemented.');
+    // const article_title = file.originalname.split('.')[0] // 获取文件名
+    // console.log('article_title', article_title);
+    // const data = await this.appService.createLibrary(article_title) // 使用上传内容创建空知识库
+    // // const id = data.id // 新知识库的id
+    const id = '2cf5d66d-a3fe-481e-9619-3b0a4d688e94'
+    const result = await this.appService.createLibraryByDoc(file, id)
+    return result
+  }
+  // 接受并解读文档内容
+  @Post('doc_read')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFileToRead(@UploadedFile() file: Express.Multer.File) {
+    const article_title = file.originalname.split('.')[0] // 获取文件名
+    console.log('article_title', article_title);
+    const data = await this.appService.createLibrary(article_title) // 使用上传内容创建空知识库
+    return data
+  }
   // 上传文件以创建dify知识库
   @Post('/upload')
   async upload_dify(@Body() article: CreateArticle) {
@@ -21,7 +48,7 @@ export class ArticleController {
     //   const feedback = '你没有权限进行该操作'
     //   return feedback
     // }
-    const data = await this.appService.createLibrary(article) // 使用上传内容创建空知识库
+    const data = await this.appService.createLibrary(article.title) // 使用上传内容创建空知识库
     const id = data.id // 新知识库的id
     console.log('id', id);
     const document_data = await this.appService.createLibraryArticle(id, article)// 在刚创建的知识库中创建文本
