@@ -12,23 +12,26 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class ArticleController {
   logger: any;
   constructor(private readonly appService: ArticleService) { }
-  // 接受文档并且存储再本地数据库
+  // 接受文档，仅且存储到本地数据库
   @Post('doc_store')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFileStore(@UploadedFile() file: Express.Multer.File) {
     return this.appService.saveFile(file);
   }
-  // 接受文档并且创建知识库
+  // 接受文档并且创建知识库 + 存储到本地数据库
   @Post('doc_dify')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFileTodify(@UploadedFile() file: Express.Multer.File) {
-    // throw new Error('Method not implemented.');
-    // const article_title = file.originalname.split('.')[0] // 获取文件名
-    // console.log('article_title', article_title);
-    // const data = await this.appService.createLibrary(article_title) // 使用上传内容创建空知识库
-    // // const id = data.id // 新知识库的id
-    const id = '2cf5d66d-a3fe-481e-9619-3b0a4d688e94'
+    // 1. 接受文档并且创建知识库 + 存储到本地数据库
+    const article_title = file.originalname.split('.')[0] // 获取文件名
+    console.log('article_title', article_title);
+    const data = await this.appService.createLibrary(article_title) // 使用上传内容创建空知识库
+    const id = data.id // 新知识库的id
+    // const id = '2cf5d66d-a3fe-481e-9619-3b0a4d688e94' // 测试createLibraryByDoc使用知识库
     const result = await this.appService.createLibraryByDoc(file, id)
+
+    // 2. 储存到本地
+    this.appService.saveFile(file);
     return result
   }
   // 接受并解读文档内容
@@ -97,14 +100,14 @@ export class ArticleController {
   }
 
 
-@Get('doc_list/:title')
-async getDocList(@Param('title') title: string, @Res() res) {
-  try {
-    const docs = await this.appService.getArticleDocByTitle(title);
-    console.log('docs:',docs);
-    res.json(docs);  // 使用 res.json 确保返回的是 JSON 格式
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  @Get('doc_list/:title')
+  async getDocList(@Param('title') title: string, @Res() res) {
+    try {
+      const docs = await this.appService.getArticleDocByTitle(title);
+      console.log('docs:', docs);
+      res.json(docs);  // 使用 res.json 确保返回的是 JSON 格式
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-}
 }
