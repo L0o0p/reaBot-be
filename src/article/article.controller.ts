@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, InternalServerErrorException, Param, Post, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticle } from './article.dto';
 import { Article } from './entities/article.entity';
@@ -10,14 +10,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @UseGuards(JwtAuthGuard)
 @Controller('article')
 export class ArticleController {
+  logger: any;
   constructor(private readonly appService: ArticleService) { }
-    // 接受文档并且存储再本地数据库
-    @Post('doc_store')
-    @UseInterceptors(FileInterceptor('file'))
-    async uploadFileStore(@UploadedFile() file: Express.Multer.File) {
-      throw new Error('Method not implemented.');
-      // return this.appService.saveFile(file);
-    }
+  // 接受文档并且存储再本地数据库
+  @Post('doc_store')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFileStore(@UploadedFile() file: Express.Multer.File) {
+    return this.appService.saveFile(file);
+  }
   // 接受文档并且创建知识库
   @Post('doc_dify')
   @UseInterceptors(FileInterceptor('file'))
@@ -87,7 +87,7 @@ export class ArticleController {
   // 根据 ID 获取本地存储的文章
   @Get(':title')
   async getUserById(@Param('title') title: string): Promise<Article> {
-    return this.appService.getArticleById(title);
+    return this.appService.getArticleByTitle(title);
   }
 
   // 获取所有本地存储的文章
@@ -95,4 +95,16 @@ export class ArticleController {
   async getAllArticle(): Promise<Article[]> {
     return this.appService.getAllArticle();
   }
+
+
+@Get('doc_list/:title')
+async getDocList(@Param('title') title: string, @Res() res) {
+  try {
+    const docs = await this.appService.getArticleDocByTitle(title);
+    console.log('docs:',docs);
+    res.json(docs);  // 使用 res.json 确保返回的是 JSON 格式
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
 }

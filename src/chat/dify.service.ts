@@ -192,7 +192,6 @@ export class DifyService {
 
       // Parse the JSON from the response
       const data = await response.json();
-      console.log("data!", data);
       const title = data.data[0].name
       const library_id = data.data[0].id
       return { title, library_id }

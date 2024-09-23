@@ -7,7 +7,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, getRepository } from 'typeorm';
 import { Article } from './entities/article.entity';
 import { CreateArticle } from './article.dto';
 import { response } from 'express';
@@ -81,7 +81,7 @@ export class ArticleService {
   }
 
   // 查询指定文章信息
-  async getArticleById(title: string): Promise<Article> {
+  async getArticleByTitle(title: string): Promise<Article> {
     try {
       const article = await this.articleRepository.findOneBy({ title });
       if (!article) {
@@ -100,6 +100,33 @@ export class ArticleService {
         'Something went wrong, Try again!',
       );
     }
+  }
+  // 查询指定文章doc
+  async getArticleDocByTitle(title: string) {
+    console.log('you...');
+    const getDocFilesByArticleTitle = async (title) => {
+      const docFiles = await this.docFileRepository
+        .createQueryBuilder('docFile')
+        .innerJoinAndSelect('docFile.article', 'article', 'article.title = :title', { title })
+        .getMany();
+      // const serializedDocFiles = docFiles[0]
+      // const serializedDocFiles = docFiles.map(docFile => ({
+      //   id: docFile.id,
+      //   name: docFile.name,
+      //   type: docFile.type,
+      //   size: docFile.size,
+      //   content: docFile.content.toString('base64'),  // Assuming content is a Buffer
+      //   article: {
+      //     id: docFile.article.id,
+      //     title: docFile.article.title,
+      //     content: docFile.article.content,
+      //     library_id: docFile.article.library_id
+      //   }
+      // }));
+      // return serializedDocFiles;
+      return docFiles;
+    }
+    return getDocFilesByArticleTitle(title)
   }
 
   // 获取dify知识库
@@ -168,7 +195,7 @@ export class ArticleService {
   async getPropertyArticle() {
     const articleName = await this.fetchDifyLibraryFiles()
     const article_name = articleName.split('.')[0];
-    const propertyArticle = this.getArticleById(article_name)
+    const propertyArticle = this.getArticleByTitle(article_name)
     return propertyArticle
   }
   // 创建dify知识库（空）
@@ -335,6 +362,7 @@ export class ArticleService {
 
     return this.docFileRepository.save(newFile);
   }
+
 }
 
 
