@@ -187,9 +187,9 @@ export class DifyService {
 
       // Check if the response was successful
       if (!response.ok) {
+        console.log('not ok');
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
       // Parse the JSON from the response
       const data = await response.json();
       const title = data.data[0].name

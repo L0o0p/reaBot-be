@@ -17,11 +17,12 @@ export class DocFile {
 
   @Column({ type: 'longblob' })
   content: Buffer;
+  
+  // 添加 tags 字段
+  @Column({ nullable: true })
+  tag: string;
 
   @ManyToOne(() => Article, article => article.files)
   article: Article;
 
-  // // 添加 tags 字段
-  // @Column()
-  // tags: string;
 }

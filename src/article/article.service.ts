@@ -68,6 +68,10 @@ export class ArticleService {
   async findByArticleTitle(title: string): Promise<CreateArticle | undefined> {
     return await this.articleRepository.findOne({ where: { title } });
   }
+  // 根据文章名搜索
+  async findByDocTag(tag: string): Promise<string> {
+    return await this.docFileRepository.findOne({ where: { tag } });
+  }
 
   // 获取文章
   async getAllArticle(): Promise<Article[]> {
@@ -83,6 +87,7 @@ export class ArticleService {
   // 查询指定文章信息
   async getArticleByTitle(title: string): Promise<Article> {
     try {
+      console.log('tilte', title);
       const article = await this.articleRepository.findOneBy({ title });
       if (!article) {
         throw new NotFoundException(`Article with title ${title} not found`);
@@ -103,28 +108,36 @@ export class ArticleService {
   }
   // 查询指定文章doc
   async getArticleDocByTitle(title: string) {
-    console.log('you...');
-    const getDocFilesByArticleTitle = async (title) => {
+    const getDocFilesByArticleTitle = async (title: string) => {
       const docFiles = await this.docFileRepository
         .createQueryBuilder('docFile')
         .innerJoinAndSelect('docFile.article', 'article', 'article.title = :title', { title })
         .getMany();
-      // const serializedDocFiles = docFiles[0]
-      // const serializedDocFiles = docFiles.map(docFile => ({
-      //   id: docFile.id,
-      //   name: docFile.name,
-      //   type: docFile.type,
-      //   size: docFile.size,
-      //   content: docFile.content.toString('base64'),  // Assuming content is a Buffer
-      //   article: {
-      //     id: docFile.article.id,
-      //     title: docFile.article.title,
-      //     content: docFile.article.content,
-      //     library_id: docFile.article.library_id
-      //   }
-      // }));
-      // return serializedDocFiles;
-      return docFiles;
+      // console.log('docFiles:', typeof docFiles, '\n', docFiles);
+      const acticle_docFiles = filterByTag(docFiles, 'article')
+      console.log('acticle_docFiles:',  acticle_docFiles);
+      return acticle_docFiles;
+    }
+    const filterByTag = async (docFiles, tag) => {
+      // 使用 filter 方法筛选数组
+      return docFiles.filter(docFile => docFile.tag === tag);
+    }
+    return getDocFilesByArticleTitle(title)
+  }
+  // 查询指定文章的问题doc
+  async getQuestionsDocByTitle(title: string) {
+    const getDocFilesByArticleTitle = async (title: string) => {
+      const docFiles = await this.docFileRepository
+        .createQueryBuilder('docFile')
+        .innerJoinAndSelect('docFile.article', 'article', 'article.title = :title', { title })
+        .getMany();
+      const questions_docFiles = filterByTag(docFiles, 'questions')
+      console.log('questions_docFiles:',  questions_docFiles);
+      return questions_docFiles;
+    }
+    const filterByTag = async (docFiles, tag) => {
+      // 使用 filter 方法筛选数组
+      return docFiles.filter(docFile => docFile.tag === tag);
     }
     return getDocFilesByArticleTitle(title)
   }
@@ -336,7 +349,7 @@ export class ArticleService {
     }
   }
   //接收前端doc文档并存储在本地数据库
-  async saveFile(file: Express.Multer.File): Promise<File> {
+  async save_articleFile(file: Express.Multer.File, id: string, tag: string): Promise<File> {
     const match_article = file.originalname.split('.')[0]; // 用doc名称命名
     console.log('match_article:', match_article);
     let existArticle = await this.findByArticleTitle(match_article);
@@ -344,12 +357,15 @@ export class ArticleService {
       console.log('不存在同名文章');
       const article = {
         title: match_article || 'article_created_by_doc',
-        content: 'created by doc'
+        content: 'created by doc',
+        library_id: id
       };
       existArticle = await this.create(article);
       console.log('创建文章成功');
     }
     console.log('existArticle:', existArticle);
+    console.log("tag:", tag);
+
     // 存在的话直接在link中创建
     const newFile = this.docFileRepository.create({
       name: file.originalname,
@@ -357,6 +373,39 @@ export class ArticleService {
       size: file.size,
       content: file.buffer,
       article: existArticle,
+      tag: tag
+    });
+    console.log('newFile:', newFile);
+
+    return this.docFileRepository.save(newFile);
+  }
+
+  //接收前端doc文档并存储在本地数据库
+  async save_questionsFile(file: Express.Multer.File, tag: string): Promise<File> {
+    const match_article = file.originalname.split('.')[0]; // 用doc名来搜索存在的同名文章
+    console.log('match_article:', match_article);
+    let existArticle = await this.findByArticleTitle(match_article);
+    if (!existArticle) {
+      console.log('不存在同名文章');
+      return
+      // const article = {
+      //   title: match_article || 'article_created_by_doc',
+      //   content: 'created by doc',
+      // };
+      // existArticle = await this.create(article);
+      // console.log('创建文章成功');
+    }
+    console.log('existArticle:', existArticle);
+    console.log("tag:", tag);
+
+    // 存在的话直接在link中创建
+    const newFile = this.docFileRepository.create({
+      name: file.originalname,
+      type: file.mimetype,
+      size: file.size,
+      content: file.buffer,
+      article: existArticle,
+      tag: tag
     });
     console.log('newFile:', newFile);
 

@@ -16,12 +16,14 @@ export class ArticleController {
   @Post('doc_store')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFileStore(@UploadedFile() file: Express.Multer.File) {
-    return this.appService.saveFile(file);
+    const id = ''
+    const tag = "article"
+    return this.appService.save_articleFile(file, id, tag);
   }
-  // 接受文档并且创建知识库 + 存储到本地数据库
-  @Post('doc_dify')
+  // 接受文档并且创建知识库 + 存储到本地数据库(文章)
+  @Post('adoc_dify')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFileTodify(@UploadedFile() file: Express.Multer.File) {
+  async upload_ArticleFileTodify(@UploadedFile() file: Express.Multer.File) {
     // 1. 接受文档并且创建知识库 + 存储到本地数据库
     const article_title = file.originalname.split('.')[0] // 获取文件名
     console.log('article_title', article_title);
@@ -31,7 +33,25 @@ export class ArticleController {
     const result = await this.appService.createLibraryByDoc(file, id)
 
     // 2. 储存到本地
-    this.appService.saveFile(file);
+    const tag = "article"
+    this.appService.save_articleFile(file, id, tag);
+    return result
+  }
+  // 接受文档并且创建知识库 + 存储到本地数据库(问题)
+  @Post('qdoc_dify')
+  @UseInterceptors(FileInterceptor('file'))
+  async upload_QuestionsFileTodify(@UploadedFile() file: Express.Multer.File) {
+    // 1. 接受文档并且创建知识库 + 存储到本地数据库
+    const article_title = file.originalname.split('.')[0] // 获取文件名
+    console.log('article_title', article_title);
+    // const data = await this.appService.createLibrary(article_title) // 使用上传内容创建空知识库
+    // const id = data.id // 新知识库的id
+    // const id = '2cf5d66d-a3fe-481e-9619-3b0a4d688e94' // 测试createLibraryByDoc使用知识库
+    // const result = await this.appService.createLibraryByDoc(file, id)
+
+    // 2. 储存到本地
+    const tag = "questions"
+    const result = this.appService.save_questionsFile(file, tag);
     return result
   }
   // 接受并解读文档内容
@@ -99,11 +119,22 @@ export class ArticleController {
     return this.appService.getAllArticle();
   }
 
-
-  @Get('doc_list/:title')
-  async getDocList(@Param('title') title: string, @Res() res) {
+  // 获取目标文章的doc
+  @Get('adoc_list/:title')
+  async get_articleDocList(@Param('title') title: string, @Res() res) {
     try {
       const docs = await this.appService.getArticleDocByTitle(title);
+      res.json(docs);  // 使用 res.json 确保返回的是 JSON 格式
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // 获取目标文章问题的doc
+  @Get('qdoc_list/:title')
+  async get_questionsDocList(@Param('title') title: string, @Res() res) {
+    try {
+      const docs = await this.appService.getQuestionsDocByTitle(title);
       console.log('docs:', docs);
       res.json(docs);  // 使用 res.json 确保返回的是 JSON 格式
     } catch (error) {
