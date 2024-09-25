@@ -21,9 +21,7 @@ export class DifyController {
   // 从本地获取机器人正在使用的知识库对应的文章
   @Get('/articleUsedByBot')
   async getBottest() {
-    console.log('library_id-1',);
     const library_id = await this.appService.fetchBotLibraryId()
-    console.log('library_id-1:',library_id);
     return this.appService.getArticleName(library_id)
     //预期返回：{"title":"节日快乐","library_id":"15e4c247-aa06-41c9-b4a2-25e49e977af5"}
   }

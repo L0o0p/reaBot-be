@@ -53,6 +53,22 @@ export class ArticleService {
     return await this.create(article);
   }
 
+  // 追加提示内容
+  //  传入：提示内容，当前使用的文章的title
+  async addTips(current_article_title: string, tips: string[]) {
+    const existArticle = await this.findByArticleTitle(current_article_title);
+    if (existArticle) {
+      const article = {
+        ...existArticle,
+        tips: tips,
+      };
+      return await this.create(article);
+    }
+  }
+
+  // 获取当前文章的tips内容
+  
+
   // 创建文章
   async create(article: CreateArticle) {
     if (!article.title) {
@@ -115,7 +131,7 @@ export class ArticleService {
         .getMany();
       // console.log('docFiles:', typeof docFiles, '\n', docFiles);
       const acticle_docFiles = filterByTag(docFiles, 'article')
-      console.log('acticle_docFiles:',  acticle_docFiles);
+      console.log('acticle_docFiles:', acticle_docFiles);
       return acticle_docFiles;
     }
     const filterByTag = async (docFiles, tag) => {
@@ -132,7 +148,7 @@ export class ArticleService {
         .innerJoinAndSelect('docFile.article', 'article', 'article.title = :title', { title })
         .getMany();
       const questions_docFiles = filterByTag(docFiles, 'questions')
-      console.log('questions_docFiles:',  questions_docFiles);
+      console.log('questions_docFiles:', questions_docFiles);
       return questions_docFiles;
     }
     const filterByTag = async (docFiles, tag) => {
@@ -266,28 +282,28 @@ export class ArticleService {
       .then(result => console.log('result:', result))
       .catch(error => console.error('Error:', error));
   };
-  async deletDifyLibrary(dataset_id: string) {
-    const url = `http://dify.cyte.site/v1/datasets/${dataset_id}`
-    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg';
-    const options = {
-      method: 'DELET',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": 'application/json'
-      },
-    };
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data; // 返回API响应数据
-    } catch (error) {
-      console.error('Error:', error);
-      throw error; // 重新抛出错误允许调用者处理它
-    }
-  }
+  // async deletDifyLibrary(dataset_id: string) {
+  //   const url = `http://dify.cyte.site/v1/datasets/${dataset_id}`
+  //   const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg';
+  //   const options = {
+  //     method: 'DELET',
+  //     headers: {
+  //       Authorization: `Bearer ${apiKey}`,
+  //       "Content-Type": 'application/json'
+  //     },
+  //   };
+  //   try {
+  //     const response = await fetch(url, options);
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+  //     const data = await response.json();
+  //     return data; // 返回API响应数据
+  //   } catch (error) {
+  //     console.error('Error:', error);
+  //     throw error; // 重新抛出错误允许调用者处理它
+  //   }
+  // }
 
   // 通过接收前端的doc文档创建dify知识库
   async createLibraryByDoc(file: Express.Multer.File, id: string) {

@@ -4,6 +4,7 @@ import { CreateArticle } from './article.dto';
 import { Article } from './entities/article.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { DifyService } from 'src/chat/dify.service';
 
 
 
@@ -11,7 +12,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('article')
 export class ArticleController {
   logger: any;
-  constructor(private readonly appService: ArticleService) { }
+  constructor(
+    private readonly appService: ArticleService,
+    private readonly chatService: DifyService
+
+  ) { }
   // 接受文档，仅且存储到本地数据库
   @Post('doc_store')
   @UseInterceptors(FileInterceptor('file'))
@@ -84,16 +89,16 @@ export class ArticleController {
     return this.appService.fetchDifyLibrary();
   }
   // 删除知识库
-  @Post(':dataset_id')
-  async deletLibrary(@Param('dataset_id') dataset_id: string) {
-    // 鉴权
-    // if (!req.user.anim_permission) {
-    //   const feedback = '你没有权限进行该操作'
-    //   return feedback
-    // }
+  // @Post(':dataset_id')
+  // async deletLibrary(@Param('dataset_id') dataset_id: string) {
+  //   // 鉴权
+  //   // if (!req.user.anim_permission) {
+  //   //   const feedback = '你没有权限进行该操作'
+  //   //   return feedback
+  //   // }
 
-    return this.appService.deletDifyLibrary(dataset_id);
-  }
+  //   return this.appService.deletDifyLibrary(dataset_id);
+  // }
 
   // 获取所有dify知识库文档列表
   @Get('/library/files')
@@ -140,5 +145,25 @@ export class ArticleController {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
+  }
+
+  // 添加文章提示
+  @Post('add_tips')
+  async addTips(@Body('tips') tips: string[]) {
+    // const library_id = await this.chatService.fetchBotLibraryId()
+    // const current_article_title = this.chatService.getArticleName(library_id)
+    const current_article_title = 'copy'
+    const docs = await this.appService.addTips(current_article_title, tips);
+    console.log('docs:', docs);
+    return
+  }
+
+  // 获取当前文章的tips内容
+  @Get('get_tips/:title')
+  async getTips(@Param('title') title: string) {
+    const data = await this.appService.getArticleByTitle(title);
+    const tips = data.tips;
+    console.log('tips:', tips);
+    return tips
   }
 }
