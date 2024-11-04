@@ -25,6 +25,7 @@ export class ArticleController {
     const tag = "article"
     return this.appService.save_articleFile(file, id, tag);
   }
+
   // 接受文档并且创建知识库 + 存储到本地数据库(文章)
   @Post('adoc_dify')
   @UseInterceptors(FileInterceptor('file'))
@@ -42,6 +43,7 @@ export class ArticleController {
     this.appService.save_articleFile(file, id, tag);
     return result
   }
+  
   // 接受文档并且创建知识库 + 存储到本地数据库(问题)
   @Post('qdoc_dify')
   @UseInterceptors(FileInterceptor('file'))

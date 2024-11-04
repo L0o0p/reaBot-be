@@ -131,7 +131,7 @@ export class ArticleService {
         .getMany();
       // console.log('docFiles:', typeof docFiles, '\n', docFiles);
       const acticle_docFiles = filterByTag(docFiles, 'article')
-      console.log('acticle_docFiles:', acticle_docFiles);
+      console.log('acticle_docFilesX:', acticle_docFiles);
       return acticle_docFiles;
     }
     const filterByTag = async (docFiles, tag) => {

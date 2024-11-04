@@ -21,6 +21,7 @@ export class DifyController {
   @Get('/articleUsedByBot')
   async getBottest() {
     const library_id = await this.appService.fetchBotLibraryId()
+    console.log('library_id',library_id);
     return this.appService.getArticleName(library_id)
     //预期返回：{"title":"节日快乐","library_id":"15e4c247-aa06-41c9-b4a2-25e49e977af5"}
   }

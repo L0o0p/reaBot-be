@@ -10,6 +10,7 @@ import { Dify } from './dify.entity';
 import { User } from 'src/users/users.entity';
 import { information } from './dify.dto';
 import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class DifyService {
@@ -22,13 +23,17 @@ export class DifyService {
       context_dbs: []
     }
   private logger = new Logger('DifyService');
+  private difyUserToken: string;
 
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private configService: ConfigService
+  ) {
     this.articleRepository = this.dataSource.getRepository(Dify);
     this.userRepository = this.dataSource.getRepository(User);
+    this.difyUserToken = this.configService.get<string>('DIFY_USER_TOKEN');
     // this.fetchBotInfo()
   }
-
   // 发送对话消息
   async sendInfo(info: information, user: { userId: number, username: string }) {
     // userId -> User
@@ -123,11 +128,12 @@ export class DifyService {
   async fetchBotLibraryId() {
     try {
       // You should use await with fetch to handle the promise properly
-      const response = await fetch("https://dify.cyte.site:2097/console/api/apps/a2ff7b15-cfc4-489d-96cf-307d33c43b00", {
+      const botID = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00'
+      const response = await fetch(`https://dify.cyte.site:2097/console/api/apps/${botID}`, {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-          "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjE2ZWJiZDQtZDQxOS00NzkxLTg1YTktZTVmNDdmMDczNDIwIiwiZXhwIjoxNzI3NTc1MzI4LCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.7zfonkN-SsEOO3CsVa2s_zU3uhOXsehE1qBGHaR-N_4",
+          "authorization": `Bearer ${this.difyUserToken}`,
           "cache-control": "no-cache",
           "content-type": "application/json",
           "pragma": "no-cache",
@@ -167,7 +173,7 @@ export class DifyService {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-          "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjE2ZWJiZDQtZDQxOS00NzkxLTg1YTktZTVmNDdmMDczNDIwIiwiZXhwIjoxNzI3NTc1MzI4LCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.7zfonkN-SsEOO3CsVa2s_zU3uhOXsehE1qBGHaR-N_4",
+          "authorization": `Bearer ${this.difyUserToken}`,
           "cache-control": "no-cache",
           "content-type": "application/json",
           "pragma": "no-cache",
@@ -240,6 +246,7 @@ export class DifyService {
   // 更改机器人使用的知识库
   async changeSourceLibrary(bot_Id: string, switchLibraryId: string) {
     const url = `https://dify.cyte.site:2097/console/api/apps/${bot_Id}/model-config`;
+    const a  = this.difyUserToken
 
     try {
       const response = await fetch(url, {
@@ -247,7 +254,7 @@ export class DifyService {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-          "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjE2ZWJiZDQtZDQxOS00NzkxLTg1YTktZTVmNDdmMDczNDIwIiwiZXhwIjoxNzI3NTc1MzI4LCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.7zfonkN-SsEOO3CsVa2s_zU3uhOXsehE1qBGHaR-N_4",
+          "authorization": `Bearer ${a}`,
           "cache-control": "no-cache",
           "content-type": "application/json",
           "pragma": "no-cache",

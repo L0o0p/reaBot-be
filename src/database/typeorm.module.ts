@@ -15,7 +15,8 @@ import { User } from 'src/users/users.entity';
           const dataSource = new DataSource({
             type: 'postgres',
             host: '100.64.0.7',
-            port: 5432,
+            port:
+              5432,
             username: 'postgres',
             password: 'User1234',
             database: 'readbot',
