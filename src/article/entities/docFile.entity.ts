@@ -15,7 +15,7 @@ export class DocFile {
   @Column()
   size: number;
 
-  @Column({ type: 'longblob' })
+  @Column({ type: 'bytea' })
   content: Buffer;
 
   // 添加 tags 字段

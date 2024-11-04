@@ -13,12 +13,12 @@ import { User } from 'src/users/users.entity';
         // using the factory function to create the datasource instance
         try {
           const dataSource = new DataSource({
-            type: 'mysql',
-            host: 'localhost',
-            port: 3306,
-            username: 'root',
-            password: 'sgy12345',
-            database: 'read-bot',
+            type: 'postgres',
+            host: '100.64.0.7',
+            port: 5432,
+            username: 'postgres',
+            password: 'User1234',
+            database: 'readbot',
             // entities: [User],
             synchronize: true,
             entities: [`${__dirname}/../**/**.entity{.ts,.js}`], // this will automatically load all entity file in the src folder

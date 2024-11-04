@@ -9,7 +9,7 @@ export class Article {
   @Column({ unique: true })
   title: string;
 
-  @Column('longtext')
+  @Column('text')
   content: string;
 
   @Column({ nullable: true })

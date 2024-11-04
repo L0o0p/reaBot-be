@@ -8,7 +8,6 @@ import { User } from 'src/users/users.entity';
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class DifyController {
-
   constructor(private readonly appService: DifyService) {
     // const current_database_id = this.appService.getCurrentDatabaseId();
   }

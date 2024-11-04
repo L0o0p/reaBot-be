@@ -36,7 +36,7 @@ export class LockController {
   // 更新密码
   @Post('update')
   async updateLocks(@Body() createLocksDto: createLocksDto) {
-    return this.appService.update(createLocksDto);
+    return this.appService.updateOrCreate(createLocksDto);
   }
 
   @Post('questionLock_validate')

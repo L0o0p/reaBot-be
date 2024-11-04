@@ -8,6 +8,6 @@ export class Dify {
   @Column({ unique: true })
   title: string;
 
-  @Column('longtext')
+  @Column('text')
   content: string;
 }

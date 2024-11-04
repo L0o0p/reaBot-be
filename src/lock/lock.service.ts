@@ -29,18 +29,32 @@ export class LockService {
     });
   }
   // 更新密码组
-  async update(createLocksDto: createLocksDto) {
-    const { questionLock, chatLock } = createLocksDto;
-    const id = 1
-    const existLocks = await this.locksRepository.findOne({ where: { id } })
-    if (!existLocks) {
-      throw new Error('the Component_lock code not found');
-    }
-    existLocks.questionLock = questionLock;
-    existLocks.chatLock = chatLock;
-    console.log('修改成功，新的密码组：', existLocks);
-    return this.locksRepository.save(existLocks);
+// 更新或创建密码组
+async updateOrCreate(createLocksDto: createLocksDto) {
+  const { questionLock, chatLock } = createLocksDto;
+  const id = 1;
+
+  // 尝试查找现有条目
+  let locks = await this.locksRepository.findOne({ where: { id } });
+
+  // 如果不存在则创建新条目
+  if (!locks) {
+    locks = this.locksRepository.create({
+      id: id, // 设置ID为1
+      questionLock: questionLock,
+      chatLock: chatLock
+    });
+    console.log('未找到条目，已创建新的密码组：', locks);
+  } else {
+    // 如果存在更新字段
+    locks.questionLock = questionLock;
+    locks.chatLock = chatLock;
+    console.log('修改成功，新的密码组：', locks);
   }
+
+  // 保存并返回更新或创建的条目
+  return this.locksRepository.save(locks);
+}
 
   // 查询所有密码组
   async getAllLocks(): Promise<Lock[]> {
