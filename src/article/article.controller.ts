@@ -160,20 +160,25 @@ export class ArticleController {
     return
   }
 
-  // 获取当前文章的tips内容
-  @Get('get_tips/:title')
-  async getTips(@Param('title') title: string) {
-    const data = await this.appService.getArticleByTitle(title);
-    const tips = data.tips;
-    console.log('tips:', tips);
-    return tips
-  }
+  // // 获取当前文章的tips内容
+  // @Get('get_tips/:title')
+  // async getTips(@Param('title') title: string) {
+  //   const data = await this.appService.getArticleByTitle(title);
+  //   const tips = data.tips;
+  //   console.log('tips:', tips);
+  //   return tips
+  // }
 
   // 获取当前文章的questions的doc文本
-  @Get('get_doc_text/:title')
-  async getDocText(@Param('title') title: string) {
+  @Get('get/doc_text')
+  async getDocText() {
+    console.log('proX');
+    const library_id = await this.chatService.fetchBotLibraryId()
+    console.log('library_id', library_id);
+    const title = (await this.chatService.getArticleName(library_id)).title+'.docx'
+    console.log('titleX:',title);
     const tag = 'questions'
-    const articleQuestions:string[] = await this.appService.getDocumentByNameAndTag(title, tag)
+    const articleQuestions: string[] = await this.appService.getDocumentByNameAndTag(title, tag)
     return articleQuestions;
   }
 }
