@@ -67,7 +67,7 @@ export class ArticleService {
   }
 
   // 获取当前文章的tips内容
-  
+
 
   // 创建文章
   async create(article: CreateArticle) {
@@ -426,6 +426,26 @@ export class ArticleService {
     console.log('newFile:', newFile);
 
     return this.docFileRepository.save(newFile);
+  }
+
+
+  async getDocumentByNameAndTag(name: string, tag: string): Promise<string[] | null> {
+    const document = await this.docFileRepository.findOne({ where: { name, tag } });
+    if (document && document.content) {
+      const result = await mammoth.extractRawText({ buffer: Buffer.from(document.content) });
+      const  rawText = result.value;
+      console.log('Document found', rawText);
+      const splitStringByNewLine = (input: string): string[] => {
+        // 使用正则表达式来同时匹配 \n 和 \r\n
+        return input.split(/\r?\n/).filter(line => line !== '');
+      }
+      const lines = splitStringByNewLine(rawText);
+      console.log('lines', lines);
+      return lines
+    } else {
+      console.log('No document found with the provided name and tag.');
+      return null;
+    }
   }
 
 }

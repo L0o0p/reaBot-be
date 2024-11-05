@@ -1,14 +1,18 @@
 import { Body, Controller, Get, Param, Post, UseGuards, Req, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
-import { information } from './dify.dto';
+import { askForTips, information } from './dify.dto';
 import { DifyService } from './dify.service';
 import { Dify } from './dify.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { User } from 'src/users/users.entity';
+import { ArticleService } from 'src/article/article.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class DifyController {
-  constructor(private readonly appService: DifyService) {
+  constructor(
+    private readonly appService: DifyService,
+    private readonly articleService: ArticleService,
+  ) {
     // const current_database_id = this.appService.getCurrentDatabaseId();
   }
   // 发送聊天消息
@@ -17,11 +21,24 @@ export class DifyController {
     // console.log("reqds",req.user.user);
     return await this.appService.sendInfo(info, req.user.user);
   }
+  // 发送聊天消息（使用questions的tips提问）
+  @Post('/gettips')
+  async sendPromptInformation(@Body() info: askForTips, @Req() req: any & { user: { id: number, username: string } }) {
+    const library_id = await this.appService.fetchBotLibraryId()
+    const title = (await this.appService.getArticleName(library_id)).title+'.docx'
+    console.log('title',title);
+    // info = "question"+"tips"
+    const articleQuestions: string[] = await this.articleService.getDocumentByNameAndTag(title, 'questions')
+    const questions = articleQuestions[info.questionIndex]
+    const mixInfo = { information: "对于这篇文章，有以下这道阅读理解题，请问" + info.tip + ":" + questions }
+    console.log(mixInfo);
+    return await this.appService.sendInfo(mixInfo, req.user.user);
+  }
   // 从本地获取机器人正在使用的知识库对应的文章
   @Get('/articleUsedByBot')
   async getBottest() {
     const library_id = await this.appService.fetchBotLibraryId()
-    console.log('library_id',library_id);
+    console.log('library_id', library_id);
     return this.appService.getArticleName(library_id)
     //预期返回：{"title":"节日快乐","library_id":"15e4c247-aa06-41c9-b4a2-25e49e977af5"}
   }

@@ -43,7 +43,7 @@ export class ArticleController {
     this.appService.save_articleFile(file, id, tag);
     return result
   }
-  
+
   // 接受文档并且创建知识库 + 存储到本地数据库(问题)
   @Post('qdoc_dify')
   @UseInterceptors(FileInterceptor('file'))
@@ -142,7 +142,7 @@ export class ArticleController {
   async get_questionsDocList(@Param('title') title: string, @Res() res) {
     try {
       const docs = await this.appService.getQuestionsDocByTitle(title);
-      console.log('docs:', docs);
+      console.log('docsX:', docs);
       res.json(docs);  // 使用 res.json 确保返回的是 JSON 格式
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -167,5 +167,13 @@ export class ArticleController {
     const tips = data.tips;
     console.log('tips:', tips);
     return tips
+  }
+
+  // 获取当前文章的questions的doc文本
+  @Get('get_doc_text/:title')
+  async getDocText(@Param('title') title: string) {
+    const tag = 'questions'
+    const articleQuestions:string[] = await this.appService.getDocumentByNameAndTag(title, tag)
+    return articleQuestions;
   }
 }

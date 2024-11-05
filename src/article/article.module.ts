@@ -9,7 +9,7 @@ import { Article } from './entities/article.entity';
 @Module({
     providers: [ArticleService,DifyService],
     controllers: [ArticleController],
-    imports: [DifyModule,TypeOrmModule.forFeature([Article, File])]
+    imports: [DifyModule,TypeOrmModule.forFeature([Article, File])]// 
   })
   export class ArticleModule {}
   
