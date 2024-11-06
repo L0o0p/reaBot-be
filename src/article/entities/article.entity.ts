@@ -6,7 +6,7 @@ export class Article {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: true })
   title: string;
 
   @Column('text')
@@ -14,7 +14,7 @@ export class Article {
 
   @Column({ nullable: true })
   library_id: string;
-  
+
   // 添加 tips 字段
   @Column({ type: 'json', nullable: true })
   tips: string[];
