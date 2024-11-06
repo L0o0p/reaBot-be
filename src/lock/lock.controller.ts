@@ -23,7 +23,7 @@ export class LockController {
   // 获取所有用户(两个组件)
   @Get()
   async getAllUsers(): Promise<Lock[]> {
-    console.log('get');
+    console.log('get111ddd');
     return this.appService.getAllLocks();
   }
 
