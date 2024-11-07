@@ -84,6 +84,11 @@ export class ArticleService {
   async findByArticleTitle(title: string): Promise<CreateArticle | undefined> {
     return await this.articleRepository.findOne({ where: { title } });
   }
+
+    // 根据文章名搜索
+  async findByArticleId(id): Promise<CreateArticle | undefined> {
+    return await this.articleRepository.findOne({ where: { id } });
+  }
   // 根据文章名搜索
   async findByDocTag(tag: string): Promise<string> {
     return await this.docFileRepository.findOne({ where: { tag } });
@@ -131,7 +136,6 @@ export class ArticleService {
         .getMany();
       // console.log('docFiles:', typeof docFiles, '\n', docFiles);
       const acticle_docFiles = filterByTag(docFiles, 'article')
-      console.log('acticle_docFilesX:', acticle_docFiles);
       return acticle_docFiles;
     }
     const filterByTag = async (docFiles, tag) => {

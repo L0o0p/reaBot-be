@@ -10,9 +10,15 @@ export class Paper {
   @JoinColumn({ name: 'articleAId' })
   articleA: Article;
 
+  @Column({nullable: true})
+  articleAId: number;
+
   @ManyToOne(() => Article)
   @JoinColumn({ name: 'articleBId' })
   articleB: Article;
+
+  @Column({nullable: true})
+  articleBId: number;
 
   @Column({ unique: true })
   theme: string;
@@ -20,8 +26,6 @@ export class Paper {
   @BeforeInsert()
   setDefaultTheme() {
     if (!this.theme) {
-      // 这里的逻辑需要生成唯一的 theme，默认格式为 "template_n"
-      // 'n' 可以是当前时间戳或任何其他递增的唯一标识符
       this.theme = `template_${Date.now()}`;
     }
   }
