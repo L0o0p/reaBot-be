@@ -54,7 +54,7 @@ export class DifyController {
   }
 
   //修改机器人使用的知识库
-  @Post('/change_library/:library_id')
+  @Get('/change_library/:library_id')
   @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
   async changeSourceLibrary(@Param('library_id') libraryId: string) {
     const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
@@ -65,6 +65,21 @@ export class DifyController {
       throw new HttpException('Failed to change the library', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  //修改机器人使用的知识库(使用标题)
+  @Get('/change_libraryBytitle/:title')
+  @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
+  async changeSourceLibraryByTittle(@Param('title') title: string) {
+    const libraryId = (await this.articleService.getArticleByTitle(title)).library_id;
+    const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
+    try {
+      const result = await this.appService.changeSourceLibrary(botId, libraryId);
+      return result;
+    } catch (error) {
+      throw new HttpException('Failed to change the library', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   // 获取聊天记录
   @Get('/chatlog')
   async getChatlog(@Req() req: any & { user: { id: number, username: string } }) {
