@@ -8,6 +8,7 @@ import { ArticleModule } from './article/article.module';
 import { DifyModule } from './chat/dify.module';
 import { LockModule } from './lock/lock.module';
 import { ConfigModule } from '@nestjs/config';
+import { AnswerSheetModule } from './answer-sheet/answer-sheet.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ConfigModule } from '@nestjs/config';
     ArticleModule,
     DifyModule,
     LockModule,
+    AnswerSheetModule,
     ConfigModule.forRoot({
       isGlobal: true,  // 这使所有模块都能访问环境变量
       envFilePath: '.env',  // 指定环境变量文件的路径

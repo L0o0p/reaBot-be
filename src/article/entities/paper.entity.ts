@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, BeforeInsert } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, BeforeInsert, OneToMany } from 'typeorm';
 import { Article } from './article.entity';
+import { AnswerSheet } from 'src/answer-sheet/entities/answer-sheet.entity';
 
 @Entity()
 export class Paper {
@@ -29,4 +30,6 @@ export class Paper {
       this.theme = `template_${Date.now()}`;
     }
   }
+    @OneToMany(() => AnswerSheet, answerSheet => answerSheet.paper)
+  answerSheets: AnswerSheet[];
 }

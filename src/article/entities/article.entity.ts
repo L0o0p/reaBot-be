@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { DocFile } from './docFile.entity';
+import { Question } from 'src/answer-sheet/entities/questions.entity';
 
 @Entity()
 export class Article {
@@ -19,6 +20,8 @@ export class Article {
   @Column({ type: 'json', nullable: true })
   tips: string[];
 
+  @OneToMany(() => Question, question => question.article)
+    questions: Question[];
 
 
   @OneToMany(() => DocFile, file => file.article)
