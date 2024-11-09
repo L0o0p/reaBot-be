@@ -8,11 +8,11 @@ import { Article } from './entities/article.entity';
 import { PaperController } from './paper.controller';
 import { PaperService } from './paper.service';
 import { Paper } from './entities/paper.entity';
+import { Question } from 'src/answer-sheet/entities/questions.entity';
 
 @Module({
-    providers: [ArticleService,DifyService,PaperService],
-    controllers: [ArticleController,PaperController],
-    imports: [DifyModule,TypeOrmModule.forFeature([Article, File,Paper])]// 
-  })
-  export class ArticleModule {}
-  
+  providers: [ArticleService, DifyService, PaperService],
+  controllers: [ArticleController, PaperController],
+  imports: [DifyModule, TypeOrmModule.forFeature([Article, File, Paper,Question])]// 
+})
+export class ArticleModule { }

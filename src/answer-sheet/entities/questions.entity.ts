@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { Article } from 'src/article/entities/article.entity';
 import { Answer } from './answers.entity';
 
@@ -8,16 +8,22 @@ export class Question {
   id: number;
 
   @Column("text")
-  text: string;
+  question: string;
 
-  @Column("text")
+  @Column("text", { array: true })
+  options: string[];
+
+  @Column("text", { nullable: true })
   correctAnswer: string;
 
-  @Column()
+  @Column({ nullable: true })// 默认给1
   score: number;
 
   @ManyToOne(() => Article, article => article.questions)
+  @JoinColumn({ name: 'articleId' })
   article: Article;
+  @Column({ nullable: true })
+  articleId: number;
 
   @OneToMany(() => Answer, answer => answer.question)
   answers: Answer[];

@@ -7,7 +7,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, getRepository } from 'typeorm';
+import { DataSource, getRepository, Repository } from 'typeorm';
 import { Article } from './entities/article.entity';
 import { CreateArticle } from './article.dto';
 import { response } from 'express';
@@ -17,6 +17,9 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as mammoth from 'mammoth';
 import { DocFile } from './entities/docFile.entity';
+import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Question } from 'src/answer-sheet/entities/questions.entity';
 interface MammothMessage {
   type: string; // 'error' | 'warning' 等
   message: string;
@@ -29,15 +32,25 @@ interface MammothTextResult {
 export class ArticleService {
   private articleRepository;
   private docFileRepository;
+  private questionRepository;
   private logger = new Logger();
+  private difyDatabaseKey: string;
+  private DIFY_URL: string;
+  private difyUserToken: string;
   //   inject the Datasource provider
   constructor(
     private dataSource: DataSource,
-    private chatService: DifyService
+    private chatService: DifyService,
+    private configService: ConfigService
   ) {
     // get Article table repository to interact with the database
     this.articleRepository = this.dataSource.getRepository(Article);
     this.docFileRepository = this.dataSource.getRepository(DocFile);
+    this.questionRepository = this.dataSource.getRepository(Question);
+    this.difyDatabaseKey = this.configService.get<string>('DIFY_DATABASE_KEY');
+    this.DIFY_URL = this.configService.get<string>('DIFY_URL');
+    this.difyUserToken = this.configService.get<string>('DIFY_USER_TOKEN');
+
   }
   // 注册文章
   async register(createArticleDto: CreateArticle, library_id: string) {
@@ -196,10 +209,10 @@ export class ArticleService {
   }
   // 获取dify知识库文档列表
   async fetchDifyLibraryFiles() {
-    const library_id = await this.chatService.fetchBotInfo() as unknown as string
-    // const dataset_id = '2cf5d66d-a3fe-481e-9619-3b0a4d688e94'//<英文短文> 知识库的id
-    const url = `https://dify.cyte.site:2097/v1/datasets/${library_id}/documents`
-    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg'//知识库的key
+    const library_id = (await this.chatService.fetchBotInfo()).model_config.dataset_configs.datasets.datasets[0].dataset.id
+    // const dataset_id = '312d5b8b-53d2-4ae9-8648-caab17550427'//<英文短文> 知识库的id
+    const url = `${this.DIFY_URL}/datasets/${library_id}/documents`
+    const apiKey = this.difyDatabaseKey//知识库的key
     try {
       // 使用 fetch 发送 GET 请求
       const response = await fetch(url, {
@@ -216,6 +229,7 @@ export class ArticleService {
 
       // 解析 JSON 数据
       const data = await response.json(); //完整数据
+      console.log('dataX',data);
       const data_name = data.data[0].data_source_detail_dict.upload_file.name //所求文档名字
       return data_name
     } catch (error) {
@@ -228,6 +242,8 @@ export class ArticleService {
   // 从dify知识库文档列表获取(名字 -> 本地搜索获取)文档文本{name,content}
   async getPropertyArticle() {
     const articleName = await this.fetchDifyLibraryFiles()
+    console.log( 'articleNameX', articleName);
+    
     const article_name = articleName.split('.')[0];
     const propertyArticle = this.getArticleByTitle(article_name)
     return propertyArticle
@@ -402,7 +418,7 @@ export class ArticleService {
   }
 
   //接收前端doc文档并存储在本地数据库
-  async save_questionsFile(file: Express.Multer.File, tag: string): Promise<File> {
+  async save_attachFile(file: Express.Multer.File, tag: string): Promise<File> {
     const match_article = file.originalname.split('.')[0]; // 用doc名来搜索存在的同名文章
     console.log('match_article:', match_article);
     let existArticle = await this.findByArticleTitle(match_article);
@@ -451,6 +467,25 @@ export class ArticleService {
       console.log('No document found with the provided name and tag.');
       return null;
     }
+  }
+
+  async convertLettersToNumbers(array:string[]) {
+    // 定义转换规则，每个字母对应一个数字
+    const mapping = {
+        'A': 0,
+        'B': 1,
+        'C': 2,
+        'D': 3
+    };
+
+    // 使用 map 方法通过查找 mapping 对象来转换数组中的每个元素
+    return array.map(item => mapping[item]);
+  }
+  
+  async getQuestionsByArticleID(article_id: number) {
+    const questions = await this.questionRepository.find({ where: { articleId: article_id } });
+    console.log('questions', questions);
+    return questions
   }
 
 }

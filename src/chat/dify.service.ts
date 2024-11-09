@@ -212,7 +212,7 @@ export class DifyService {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-          "authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjE2ZWJiZDQtZDQxOS00NzkxLTg1YTktZTVmNDdmMDczNDIwIiwiZXhwIjoxNzI3NTc1MzI4LCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.7zfonkN-SsEOO3CsVa2s_zU3uhOXsehE1qBGHaR-N_4",
+          "authorization": `Bearer ${this.difyUserToken}`,
           "cache-control": "no-cache",
           "content-type": "application/json",
           "pragma": "no-cache",

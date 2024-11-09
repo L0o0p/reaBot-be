@@ -9,6 +9,7 @@ import { PaperService } from './paper.service';
 import { DataSource } from 'typeorm';
 import { Paper } from './entities/paper.entity';
 import * as mammoth from 'mammoth';
+import { get } from 'http';
 
 
 
@@ -95,7 +96,7 @@ export class PaperController {
             console.log('articleB_Text:', articleB_Text);
         }
         const newPaper = {
-            id:id,
+            id: id,
             articleA_title: articleA_Text,
             articleB_title: articleB_Text,
         };
