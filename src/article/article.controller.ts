@@ -152,8 +152,8 @@ export class ArticleController {
     console.log('article_title', article_title);
 
     // 2. docx储存到本地
-    // const tag = "questions"
-    // const result = this.appService.save_attachFile(file, tag);
+    const tag = "questions"
+    const result = this.appService.save_attachFile(file, tag);
 
     // 3. 读取doc内的文本内容到数据库
     const data = await mammoth.extractRawText({ buffer: Buffer.from(file.buffer) });

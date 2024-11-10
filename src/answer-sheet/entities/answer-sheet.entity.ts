@@ -9,7 +9,7 @@ export class AnswerSheet {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({nullable: true})
   totalScore: number;
 
   @ManyToOne(() => Paper, paper => paper.answerSheets)

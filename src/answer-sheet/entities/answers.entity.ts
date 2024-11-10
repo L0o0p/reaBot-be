@@ -7,8 +7,8 @@ export class Answer {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column("text")
-  answerText: string;
+  @Column('text')
+  answerText: number;
 
   @Column()
   isCorrect: boolean;

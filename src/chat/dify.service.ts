@@ -16,7 +16,6 @@ import { ConfigService } from '@nestjs/config';
 export class DifyService {
   private articleRepository;
   private userRepository: Repository<User>;
-
   public current_bot_config: {
     context_dbs: string[]
   } = {
