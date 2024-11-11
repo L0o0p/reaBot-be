@@ -81,6 +81,7 @@ export class ArticleController {
   //     return
   //   }
   // 接受文档，仅且存储到本地数据库
+  
   @Post('doc_store')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFileStore(@UploadedFile() file: Express.Multer.File) {
