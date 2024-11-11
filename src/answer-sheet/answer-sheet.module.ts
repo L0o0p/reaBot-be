@@ -12,10 +12,11 @@ import { DifyService } from 'src/chat/dify.service';
 import { DifyController } from 'src/chat/dify.controller';
 import { AnswerSheet } from './entities/answer-sheet.entity';
 import { Paper } from 'src/article/entities/paper.entity';
+import { SupplementalQuestion } from './entities/supplementalQuestion.entity';
 
 @Module({
   controllers: [AnswerSheetController,ArticleController,DifyController],
   providers: [AnswerSheetService,ArticleService,DifyService],
-  imports: [DifyModule, ArticleModule, TypeOrmModule.forFeature([Article, File,Question,AnswerSheet,Paper])]// 
+  imports: [DifyModule, ArticleModule, TypeOrmModule.forFeature([Article, File,Question,AnswerSheet,Paper,SupplementalQuestion])]// 
 })
 export class AnswerSheetModule {}

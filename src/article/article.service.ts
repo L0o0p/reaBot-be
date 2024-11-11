@@ -252,12 +252,11 @@ export class ArticleService {
   async createLibrary(article_title: string) {
     const rootUrl = 'https://dify.cyte.site:2097/v1'
     const url = `${rootUrl}/datasets`
-    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg';  // 知识库密钥
 
     const options = {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${this.difyDatabaseKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -277,6 +276,7 @@ export class ArticleService {
       throw error; // 重新抛出错误允许调用者处理它
     }
   }
+  
   // 在给定id的知识库中创建新文档
   async createLibraryArticle(id: string, createArticleDto: CreateArticle) {
     const datasetId = id; // Replace {dataset_id} with your actual dataset ID

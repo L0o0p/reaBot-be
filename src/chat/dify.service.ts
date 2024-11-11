@@ -36,6 +36,9 @@ export class DifyService {
   // 发送对话消息
   async sendInfo(info: information, user: { userId: number, username: string }) {
     // userId -> User
+    console.log('informationX',info);
+    console.log('user:',user);
+    
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
     console.log('user_found', user_found);
     const url = 'https://dify.cyte.site:2097/v1/chat-messages';
@@ -62,6 +65,7 @@ export class DifyService {
     // 根据业务需求调整返回值
     return { conversation_id, answer };
   }
+
   // 发送对话消息- 执行方法
   async postData(url, body, headers) {
     try {
@@ -77,6 +81,7 @@ export class DifyService {
       throw new InternalServerErrorException('无法发送信息到 Dify 服务器');
     }
   }
+
   // 给用户创建新的conversation_id
   async updateUserConversation(cvsId: string, user: User): Promise<void> {
     try {
@@ -196,6 +201,7 @@ export class DifyService {
       }
       // Parse the JSON from the response
       const data = await response.json();
+      console.log('data.data[0]',data);
       const title = data.data[0].name
       const library_id = data.data[0].id
       return { title, library_id }
@@ -207,7 +213,8 @@ export class DifyService {
   async fetchBotInfo() {
     try {
       // You should use await with fetch to handle the promise properly
-      const response = await fetch("https://dify.cyte.site:2097/console/api/apps/a2ff7b15-cfc4-489d-96cf-307d33c43b00", {
+      const bot_Key = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00'
+      const response = await fetch(`https://dify.cyte.site:2097/console/api/apps/${bot_Key}`, {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
@@ -222,7 +229,7 @@ export class DifyService {
           "sec-fetch-dest": "empty",
           "sec-fetch-mode": "cors",
           "sec-fetch-site": "same-origin",
-          "Referer": "https://dify.cyte.site:2097/app/a2ff7b15-cfc4-489d-96cf-307d33c43b00/configuration",
+          "Referer": `https://dify.cyte.site:2097/app/${bot_Key}/configuration`,
           "Referrer-Policy": "strict-origin-when-cross-origin"
         },
         method: "GET"

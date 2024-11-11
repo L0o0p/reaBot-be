@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, OneToOne } from 'typeorm';
 import { Article } from 'src/article/entities/article.entity';
 import { Answer } from './answers.entity';
+import { SupplementalQuestion } from './supplementalQuestion.entity';
 
 @Entity()
 export class Question {
@@ -27,4 +28,8 @@ export class Question {
 
   @OneToMany(() => Answer, answer => answer.question)
   answers: Answer[];
+
+  // 添加与 SupplementalQuestion 的一对一关系
+  @OneToOne(() => SupplementalQuestion, supplementalQuestion => supplementalQuestion.question)
+  supplementalQuestion: SupplementalQuestion;
 }

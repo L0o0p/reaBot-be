@@ -313,6 +313,8 @@ export class ArticleController {
     const library_id = await this.chatService.fetchBotLibraryId()
     const title = (await this.chatService.getArticleName(library_id)).title
     const article_id = (await this.getUserById(title)).id
+    console.log('article_id',article_id);
+    
     const articleQuestions: QuestionItem[] = await this.appService.getQuestionsByArticleID(article_id)
     return articleQuestions;
   }

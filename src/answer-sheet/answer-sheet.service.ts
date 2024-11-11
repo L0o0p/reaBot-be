@@ -7,12 +7,14 @@ import { AnswerSheet } from './entities/answer-sheet.entity';
 import { Paper } from 'src/article/entities/paper.entity';
 import { DifyService } from 'src/chat/dify.service';
 import { information } from 'src/chat/dify.dto';
+import { Question } from './entities/questions.entity';
 
 @Injectable()
 export class AnswerSheetService {
   private answerRepository: Repository<Answer>;
   private answersheetRepository: Repository<AnswerSheet>;
   private paperRepository: Repository<Paper>;
+  private questionRepository: Repository<Question>;
   private logger = new Logger('AnswerSheetService');
 
   constructor(
@@ -21,6 +23,7 @@ export class AnswerSheetService {
     this.answerRepository = this.dataSource.getRepository(Answer);
     this.answersheetRepository = this.dataSource.getRepository(AnswerSheet);
     this.paperRepository = this.dataSource.getRepository(Paper);
+    this.questionRepository = this.dataSource.getRepository(Question);
   }
 
   // 录入学生提交的成绩，如果答题卡不存在就先创建一个答题卡
@@ -37,7 +40,6 @@ export class AnswerSheetService {
     // const answerSheetId = 1
     const answerSheet = (await this.answersheetRepository.find({ where: { paper: { id: paperId }, user: { id: userId } } })) ;
     if(answerSheet && answerSheet.length > 0){
-      console.log('answerSheetIdRight:', answerSheet);
       const answerSheetId = answerSheet[0].id;
     const userAnswer = {
       answerText: answerText,
@@ -69,6 +71,19 @@ export class AnswerSheetService {
       user: { id: userId },
     }
     return await this.answersheetRepository.save(answerSheet)
+   }
+  
+    async findSupplementalQuestionByQuestionId(questionId: number) {
+    const question = await this.questionRepository.findOne({
+      where: { id: questionId },
+      relations: ['supplementalQuestion'], // 确保加载关联的 SupplementalQuestion
+    });
+
+    if (question) {
+      return question.supplementalQuestion;
+    } else {
+      return null; // 没有找到对应的 Question 或 SupplementalQuestion
+    }
   }
 
 }
