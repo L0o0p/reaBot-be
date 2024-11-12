@@ -8,8 +8,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { User } from './users.entity';
+import { User } from './entity/users.entity';
 import * as bcrypt from 'bcryptjs';
+import { UserProgress } from './entity/user-progress.entity';
 
 
 export interface CreateUser {
@@ -19,11 +20,13 @@ export interface CreateUser {
 
 @Injectable()
 export class UsersService {
+  private userProgressRepository
   private userRepository;
   private logger = new Logger();
   //   inject the Datasource provider
   constructor(private dataSource: DataSource) {
     // get users table repository to interact with the database
+    this.userProgressRepository = this.dataSource.getRepository(UserProgress);
     this.userRepository = this.dataSource.getRepository(User);
   }
   // 注册用户
@@ -55,7 +58,12 @@ export class UsersService {
   async findByUsername(username: string): Promise<User | undefined> {
     return await this.userRepository.findOne({ where: { username } });
   }
-
+  
+  async createUserProgress(user: User): Promise<UserProgress> {
+    const newProgress = new UserProgress();
+    newProgress.user = user;
+    return this.userProgressRepository.save(newProgress);
+  }
 }
 
 // 哈希密码

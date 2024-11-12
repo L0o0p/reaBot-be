@@ -1,6 +1,5 @@
 import { DataSource } from 'typeorm';
 import { Global, Module } from '@nestjs/common';
-import { User } from 'src/users/users.entity';
 
 @Global() // makes the module available globally for other modules once imported in the app modules
 @Module({
@@ -14,7 +13,7 @@ import { User } from 'src/users/users.entity';
         try {
           const dataSource = new DataSource({
             type: 'postgres',
-            host: '100.64.0.7',
+            host: '10.0.1.31',
             port:
               5432,
             username: 'postgres',

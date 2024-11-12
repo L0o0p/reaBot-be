@@ -1,5 +1,5 @@
 import { Paper } from 'src/article/entities/paper.entity';
-import { User } from 'src/users/users.entity';
+import { User } from 'src/users/entity/users.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { Answer } from './answers.entity';
 

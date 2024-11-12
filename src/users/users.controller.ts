@@ -9,7 +9,15 @@ export class UsersController {
   @Post('/create')
   //   handles the post request to /users/create endpoint to create new user
   async signUp(@Body() user: CreateUser) {
-    return await this.userService.register(user);
+    const newUser = await this.userService.register(user);
+// 创建新的进度记录，链接到新注册的用户
+    const newProgress = await this.userService.createUserProgress(newUser);
+    return newUser
+    return {
+      user: newUser,
+      progress: newProgress,
+      message: 'User registered and progress created successfully.'
+    };
   }
   
   @UseGuards(JwtAuthGuard)

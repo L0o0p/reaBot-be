@@ -235,7 +235,7 @@ export class ArticleController {
     return this.appService.fetchDifyLibraryFiles();
   }
 
-  // 获取所有dify知识库文档列表中对应的文章
+  // 获取所用dify知识库文档列表中对应的文章
   @Get('/propertyArticle')
   async getPropertyArticle() {
     return this.appService.getPropertyArticle();

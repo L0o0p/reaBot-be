@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 // import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmModule } from './database/typeorm.module';
 import { UsersModule } from './users/users.module';
-import { User } from './users/users.entity';
 import { AuthModule } from './auth/auth.module';
 import { ArticleModule } from './article/article.module';
 import { DifyModule } from './chat/dify.module';

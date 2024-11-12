@@ -7,7 +7,7 @@ import {
   InternalServerErrorException,
   BadRequestException,
 } from '@nestjs/common';
-import { User } from 'src/users/users.entity';
+import { User } from 'src/users/entity/users.entity';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';

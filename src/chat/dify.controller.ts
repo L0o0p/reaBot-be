@@ -3,7 +3,6 @@ import { askForTips, information } from './dify.dto';
 import { DifyService } from './dify.service';
 import { Dify } from './dify.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
-import { User } from 'src/users/users.entity';
 import { ArticleService } from 'src/article/article.service';
 
 @UseGuards(JwtAuthGuard)
