@@ -107,4 +107,12 @@ async recordUserAnswer(answerText: number, isCorrect: boolean, questionId: numbe
     }
   }
 
+  async findLatestAnswerSheet(userId: number): Promise<AnswerSheet | undefined> {
+    return this.answerSheetRepository.findOne({
+      where: { user: { id: userId } },
+      order: { createdAt: 'DESC' },
+      relations: ['user', 'paper', 'answers'], // 加载关联实体，视具体需求而定
+    });
+  }
+
 }

@@ -1,6 +1,6 @@
 import { Paper } from 'src/article/entities/paper.entity';
 import { User } from 'src/users/entity/users.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn } from 'typeorm';
 import { Answer } from './answers.entity';
 
 
@@ -11,6 +11,9 @@ export class AnswerSheet {
 
   @Column({nullable: true})
   totalScore: number;
+
+  @CreateDateColumn({ name: 'creation_timestamp' })
+  createdAt: Date;
 
   @ManyToOne(() => Paper, paper => paper.answerSheets)
   paper: Paper;

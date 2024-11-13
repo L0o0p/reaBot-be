@@ -211,7 +211,7 @@ export class ArticleService {
   async fetchDifyLibraryFiles() {
     const library_id = (await this.chatService.fetchBotInfo()).model_config.dataset_configs.datasets.datasets[0].dataset.id
     // const dataset_id = '312d5b8b-53d2-4ae9-8648-caab17550427'//<英文短文> 知识库的id
-    const url = `${this.DIFY_URL}/datasets/${library_id}/documents`
+    const url = `${this.DIFY_URL}/v1/datasets/${library_id}/documents`
     const apiKey = this.difyDatabaseKey//知识库的key
     try {
       // 使用 fetch 发送 GET 请求
@@ -250,8 +250,7 @@ export class ArticleService {
   }
   // 创建dify知识库（空）
   async createLibrary(article_title: string) {
-    const rootUrl = 'https://dify.cyte.site:2097/v1'
-    const url = `${rootUrl}/datasets`
+    const url = `${this.DIFY_URL}/v1/datasets`
 
     const options = {
       method: 'POST',
@@ -280,8 +279,8 @@ export class ArticleService {
   // 在给定id的知识库中创建新文档
   async createLibraryArticle(id: string, createArticleDto: CreateArticle) {
     const datasetId = id; // Replace {dataset_id} with your actual dataset ID
-    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg'; // Replace {api_key} with your actual API key
-    const rootUrl = 'https://dify.cyte.site:2097/v1'
+    const apiKey = this.difyDatabaseKey; // Replace {api_key} with your actual API key
+    const rootUrl = `${this.DIFY_URL}/v1`
     const url = `${rootUrl}/datasets/${datasetId}/document/create_by_text`;
 
     const options = {
@@ -329,7 +328,7 @@ export class ArticleService {
   // 通过接收前端的doc文档创建dify知识库
   async createLibraryByDoc(file: Express.Multer.File, id: string) {
     const datasetId = id
-    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg';
+    const apiKey = this.difyDatabaseKey;
     const form = new FormData();
     // 将 JSON 对象转换为字符串并添加到 FormData
     const jsonData = JSON.stringify({
@@ -356,7 +355,7 @@ export class ArticleService {
     form.append('file', blob, file.originalname);
 
     try {
-      const response = await axios.post(`https://dify.cyte.site:2097/v1/datasets/${datasetId}/document/create_by_file`, form, {
+      const response = await axios.post(`${this.DIFY_URL}/v1/datasets/${datasetId}/document/create_by_file`, form, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${apiKey}`
@@ -386,7 +385,7 @@ export class ArticleService {
     }
   }
   //接收前端doc文档并存储在本地数据库
-  async save_articleFile(file: Express.Multer.File, id: string, tag: string): Promise<File> {
+  async save_articleFile(file: Express.Multer.File, id: string, tag: string, rawText:string): Promise<File> {
     const match_article = file.originalname.split('.')[0]; // 用doc名称命名
     console.log('match_article:', match_article);
     let existArticle = await this.findByArticleTitle(match_article);
@@ -394,7 +393,7 @@ export class ArticleService {
       console.log('不存在同名文章');
       const article = {
         title: match_article || 'article_created_by_doc',
-        content: 'created by doc',
+        content: rawText,
         library_id: id
       };
       existArticle = await this.create(article);
@@ -486,6 +485,10 @@ export class ArticleService {
     const questions = await this.questionRepository.find({ where: { articleId: article_id } });
     console.log('questions', questions);
     return questions
+  }
+
+  async getLibraryId(articleId:number): Promise<string> {
+    return await this.articleRepository.findOne({ where: { articleId: articleId } })
   }
 
 }

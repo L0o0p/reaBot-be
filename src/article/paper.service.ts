@@ -214,4 +214,13 @@ export class PaperService {
         return totalScore;
 
     }
+
+    async findLibraryIdByPaperId(paperId: number): Promise<string | undefined> {
+    const paper = await this.paperRepository.findOne({
+      where: { id: paperId },
+      relations: ['articleA'],  // 确保加载了关联的ArticleA实体
+    });
+
+    return paper?.articleA?.library_id;  // 返回字符串类型的libraryId
+  }
 }

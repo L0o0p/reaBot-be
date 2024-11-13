@@ -1,23 +1,23 @@
 import { Module } from '@nestjs/common';
-// import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmModule } from './database/typeorm.module';
-import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
-import { ArticleModule } from './article/article.module';
-import { DifyModule } from './chat/dify.module';
-import { LockModule } from './lock/lock.module';
 import { ConfigModule } from '@nestjs/config';
-import { AnswerSheetModule } from './answer-sheet/answer-sheet.module';
+import { DifyController } from './chat/dify.controller';
+import { AnswerSheetService } from './answer-sheet/answer-sheet.service';
+import { ArticleService } from './article/article.service';
+import { DifyService } from './chat/dify.service';
+import { UsersService } from './users/users.service';
+import { AnswerSheetController } from './answer-sheet/answer-sheet.controller';
+import { ArticleController } from './article/article.controller';
+import { AuthController } from './auth/auth.controller';
+import { UsersController } from './users/users.controller';
+import { AuthService } from './auth/auth.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
+  providers: [UsersService, DifyService, ArticleService, AnswerSheetService,AuthService,JwtService],
+  controllers:[DifyController,AnswerSheetController,ArticleController,AuthController,UsersController],
   imports: [
     TypeOrmModule,
-    UsersModule,
-    AuthModule,
-    ArticleModule,
-    DifyModule,
-    LockModule,
-    AnswerSheetModule,
     ConfigModule.forRoot({
       isGlobal: true,  // 这使所有模块都能访问环境变量
       envFilePath: '.env',  // 指定环境变量文件的路径

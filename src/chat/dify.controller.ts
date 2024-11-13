@@ -4,6 +4,7 @@ import { DifyService } from './dify.service';
 import { Dify } from './dify.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { ArticleService } from 'src/article/article.service';
+import { UsersService } from 'src/users/users.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -11,6 +12,7 @@ export class DifyController {
   constructor(
     private readonly appService: DifyService,
     private readonly articleService: ArticleService,
+    private readonly userService: UsersService,
   ) {
     // const current_database_id = this.appService.getCurrentDatabaseId();
   }
@@ -55,8 +57,9 @@ export class DifyController {
   //修改机器人使用的知识库
   @Get('/change_library/:library_id')
   @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
-  async changeSourceLibrary(@Param('library_id') libraryId: string) {
-    const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
+  async changeSourceLibrary(@Param('library_id') libraryId: string, @Req() req: any & { user: { id: number, username: string } }) {
+    const botId = await this.userService.getBotIdByUserId(req.user.id);
+    // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
     try {
       const result = await this.appService.changeSourceLibrary(botId, libraryId);
       return result;

@@ -81,14 +81,14 @@ export class ArticleController {
   //     return
   //   }
   // 接受文档，仅且存储到本地数据库
-  
-  @Post('doc_store')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFileStore(@UploadedFile() file: Express.Multer.File) {
-    const id = ''
-    const tag = "article"
-    return this.appService.save_articleFile(file, id, tag);
-  }
+
+  // @Post('doc_store')
+  // @UseInterceptors(FileInterceptor('file'))
+  // async uploadFileStore(@UploadedFile() file: Express.Multer.File) {
+  //   const id = ''
+  //   const tag = "article"
+  //   return this.appService.save_articleFile(file, id, tag);
+  // }
 
   // 接受文档并且创建知识库 + 存储到本地数据库(文章)
   @Post('adoc_dify')
@@ -101,11 +101,25 @@ export class ArticleController {
     const id = data.id // 新知识库的id
     // const id = '2cf5d66d-a3fe-481e-9619-3b0a4d688e94' // 测试createLibraryByDoc使用知识库
     const result = await this.appService.createLibraryByDoc(file, id)
-
-    // 2. 储存到本地
+    // 2. 读取doc内的文本内容到数据库
+    const rawTextData = await mammoth.extractRawText({ buffer: Buffer.from(file.buffer) });
+    const rawText = rawTextData.value;
+    console.log('rawText', rawText);
+    function getTextAfterFirstNewline(text) {
+    const index = text.indexOf('\n');
+    if (index !== -1) {
+        return text.substring(index + 1);
+    }
+    return ""; // 如果没有换行符，返回空字符串
+    }
+    const processedText = getTextAfterFirstNewline(rawText);
+    // 3. 储存到本地
     const tag = "article"
-    this.appService.save_articleFile(file, id, tag);
-    return result
+    this.appService.save_articleFile(file, id, tag, processedText);
+
+    const finishText = 'Article have been saved'
+    console.log(finishText);
+    return finishText
   }
 
   // 接受文档并且存储到本地数据库(问题)并拿出来存到answer数据表里
@@ -131,8 +145,8 @@ export class ArticleController {
     // 4. 存储doc内的文本内容到数据库
     // 获取这个文件的名字=>title=>article_id&questions_id来判断存在哪里
     const articleId = (await this.appService.getPropertyArticle()).id
-    console.log( 'articleIdX', articleId);
-    
+    console.log('articleIdX', articleId);
+
     savableData.forEach(async (item: any, index: number) => {
       // Assuming questionData contains correctAnswer and score
       await this.questionRepository.update(
@@ -314,8 +328,8 @@ export class ArticleController {
     const library_id = await this.chatService.fetchBotLibraryId()
     const title = (await this.chatService.getArticleName(library_id)).title
     const article_id = (await this.getUserById(title)).id
-    console.log('article_id',article_id);
-    
+    console.log('article_id', article_id);
+
     const articleQuestions: QuestionItem[] = await this.appService.getQuestionsByArticleID(article_id)
     return articleQuestions;
   }
