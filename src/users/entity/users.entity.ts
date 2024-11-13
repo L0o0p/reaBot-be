@@ -19,6 +19,9 @@ export class User {
   @Column({ nullable: true })
   bot_id: string;
 
+  @Column({ nullable: true })
+  bot_key: string;
+
   @Column({ nullable: true, default: true })
   anim_permission: boolean;
 

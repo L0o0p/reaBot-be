@@ -34,7 +34,7 @@ export class DifyService {
     // this.fetchBotInfo()
   }
   // 发送对话消息
-  async sendInfo(info: information, user: { userId: number, username: string }) {
+  async sendInfo(info: information, user) {
     // userId -> User
     console.log('informationX',info);
     console.log('user:',user);
@@ -42,7 +42,7 @@ export class DifyService {
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
     console.log('user_found', user_found);
     const url = 'https://dify.cyte.site:2097/v1/chat-messages';
-    const apiKey = 'app-8rXZUovD1x6yBACSZBW9JICy';  // 使用正确的API密钥
+    const apiKey = user_found.bot_key;  // 使用正确的API密钥
     const headers = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
@@ -252,15 +252,15 @@ export class DifyService {
   // 更改机器人使用的知识库
   async changeSourceLibrary(bot_Id: string, switchLibraryId: string) {
     const url = `https://dify.cyte.site:2097/console/api/apps/${bot_Id}/model-config`;
-    const a  = this.difyUserToken
-
+    console.log('url',url);
+    
     try {
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-          "authorization": `Bearer ${a}`,
+          "authorization": `Bearer ${this.difyUserToken}`,
           "cache-control": "no-cache",
           "content-type": "application/json",
           "pragma": "no-cache",

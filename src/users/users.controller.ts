@@ -49,12 +49,13 @@ export class UsersController {
       description: "read_bot"
     }
     const newBot = await this.userService.createBot(botSettings)
-    
+    // 获取并且存储机器人的key
+    const botKey = (await this.userService.saveBotKey(newBot.id)).token
     // 注册用户
-    const newUser = await this.userService.register(user, newBot.id);
+    const newUser = await this.userService.register(user, newBot.id,botKey);
     const newUser_id = newUser.id;
     // 给用户创建一个进度
-    const paperId = 1
+    const paperId = await this.paperService.getPaperWithSmallestId()
     await this.answerSheetService.CreateAnswerSheet(paperId, newUser_id)
     const libraryId = await this.paperService.findLibraryIdByPaperId(paperId)
     // 最新的答题卡（进度）=> 对应paperId.articleA => libraryId => changeSourceLibrary(newBot_id, libraryId)
@@ -62,6 +63,11 @@ export class UsersController {
     // 创建新的进度记录，链接到新注册的用户
     // const newProgress = await this.userService.createUserProgress(newUser);
     return newUser
+  }
+    @Get('test')
+  //   handles the post request to /users/create endpoint to create new user
+    async test() {
+      return await this.paperService.findNextMinId(2)
   }
 
 

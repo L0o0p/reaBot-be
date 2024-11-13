@@ -9,6 +9,7 @@ import * as mammoth from 'mammoth';
 import { Question } from 'src/answer-sheet/entities/questions.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaperService } from './paper.service';
 
 
 interface QuestionItem {
@@ -21,74 +22,12 @@ export class ArticleController {
   logger: any;
   constructor(
     private readonly appService: ArticleService,
+    private readonly paperService: PaperService,
     private readonly chatService: DifyService,
     private dataSource: DataSource,
     @InjectRepository(Question)
-    private questionRepository: Repository<Question>
+    private questionRepository: Repository<Question>,
   ) { }
-
-  //   @Get('test')
-  //   async test() {
-  //     const text = `1.What is the Spring Festival also known as?
-  // A) Mid-Autumn Festival
-  // B) Dragon Boat Festival
-  // C) Chinese New Year
-  // D) Lantern Festival
-
-  // 2.When does the Spring Festival usually start?
-  // A) The first day of the first lunar month
-  // B) The fifteenth day of the eighth lunar month
-  // C) The seventh day of the seventh lunar month
-  // D) The first day of the tenth lunar month
-
-  // 3.Why do families clean their homes before the festival?
-  // A) To prepare for the New Year cooking
-  // B) To welcome guests from afar
-  // C) To sweep away bad luck and make room for good luck
-  // D) To find lost items
-
-  // 4.What does the fish served during the reunion dinner symbolize?
-  // A) Strength and courage
-  // B) Wealth and prosperity
-  // C) Long life and wisdom
-  // D) Abundance and surplus
-
-  // 5.What are “hongbao”?
-  // A) Traditional sweets eaten during the festival
-  // B) Red envelopes containing money
-  // C) Special prayers written on red paper
-  // D) Decorative items hung on doors`;
-  //     // Splitting the text into chunks based on double newlines
-  //     const chunks = text.split('\n\n');
-  //     console.log('chunks', chunks);
-
-  //     for (const chunk of chunks) {
-  //       const lines = chunk.split('\n');
-  //       console.log('lines', lines);
-  //       const question = lines[0];
-  //       console.log('question', question);
-  //       const options = lines.slice(1);
-  //       console.log('options', options);
-
-  //       const quizQuestion = new Question();
-  //       quizQuestion.question = question;
-  //       quizQuestion.options = options;
-
-  //       await this.questionRepository.save(quizQuestion);
-
-  //       console.log('Questions have been saved');
-  //     }
-  //     return
-  //   }
-  // 接受文档，仅且存储到本地数据库
-
-  // @Post('doc_store')
-  // @UseInterceptors(FileInterceptor('file'))
-  // async uploadFileStore(@UploadedFile() file: Express.Multer.File) {
-  //   const id = ''
-  //   const tag = "article"
-  //   return this.appService.save_articleFile(file, id, tag);
-  // }
 
   // 接受文档并且创建知识库 + 存储到本地数据库(文章)
   @Post('adoc_dify')
@@ -106,11 +45,11 @@ export class ArticleController {
     const rawText = rawTextData.value;
     console.log('rawText', rawText);
     function getTextAfterFirstNewline(text) {
-    const index = text.indexOf('\n');
-    if (index !== -1) {
+      const index = text.indexOf('\n');
+      if (index !== -1) {
         return text.substring(index + 1);
-    }
-    return ""; // 如果没有换行符，返回空字符串
+      }
+      return ""; // 如果没有换行符，返回空字符串
     }
     const processedText = getTextAfterFirstNewline(rawText);
     // 3. 储存到本地
@@ -332,5 +271,22 @@ export class ArticleController {
 
     const articleQuestions: QuestionItem[] = await this.appService.getQuestionsByArticleID(article_id)
     return articleQuestions;
+  }
+
+  @Get('get/progress')
+  async getProcceed() {
+    const currentArticle = (await this.appService.getPropertyArticle())
+    const article_id = currentArticle.id
+    const index = (await this.appService.getLatestAnswerRank(article_id)).rank
+    console.log(`当前做到${currentArticle.id}. ${currentArticle.title}的第${index}题`);
+    return index
+    const currentAnswers = await this.appService.getAnswersByArticleId(article_id)
+    const currentPaper = await this.paperService.getCurrentPaper()
+    const currentProgress = {
+      paper: currentPaper,
+      article:currentArticle,
+      answer: currentAnswers,
+    }
+    return currentProgress;
   }
 }

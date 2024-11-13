@@ -46,7 +46,7 @@ export class UsersService {
     this.difyUserToken = this.configService.get<string>('DIFY_USER_TOKEN');
   }
   // 注册用户
-  async register(createUserDto: CreateUser,botId:string) {
+  async register(createUserDto: CreateUser,botId:string,botKey:string) {
     const { username, password } = createUserDto;
     const existUser = await this.findByUsername(username);
     if (existUser) {
@@ -56,7 +56,8 @@ export class UsersService {
     const user = {
       ...createUserDto,
       password: encryptPwd(password), // 保存加密后的密码
-      bot_id:botId,
+      bot_id: botId,
+      bot_key:botKey
     };
 
     return await this.create(user);
@@ -103,7 +104,31 @@ export class UsersService {
       where: { id: userId },
       select: ['bot_id']
     });
+    }
+  
+  async destroyConversationId(userId: number) {
+    await this.userRepository.update({ id: userId }, { conversation_id: null });
+    return this.userRepository.findOne({
+      where: { id: userId },
+    });
   }
+
+  async saveBotKey(botId:string) {
+    const url = `${this.DIFY_URL}/console/api/apps/${botId}/api-keys`
+    const header = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.difyUserToken}`
+    };
+    const options = {
+      method: 'POST',
+      headers: header,
+      // body: JSON.stringify(CreateBot)
+    };
+    const response = await fetch(url, options);
+    const data = await response.json();
+    return data;
+  }
+  
 }
 
 // 哈希密码

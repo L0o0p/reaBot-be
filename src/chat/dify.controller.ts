@@ -18,7 +18,10 @@ export class DifyController {
   }
   // 发送聊天消息
   @Post('/send')
-  async sendInformation(@Body() info: information, @Req() req: any & { user: { id: number, username: string } }) {
+  async sendInformation(
+    @Body() info: information,
+    @Req() req: any & { user}
+  ) {
     // console.log("reqds",req.user.user);
     return await this.appService.sendInfo(info, req.user.user);
   }
@@ -55,25 +58,41 @@ export class DifyController {
   }
 
   //修改机器人使用的知识库
-  @Get('/change_library/:library_id')
-  @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
-  async changeSourceLibrary(@Param('library_id') libraryId: string, @Req() req: any & { user: { id: number, username: string } }) {
-    const botId = await this.userService.getBotIdByUserId(req.user.user.userId);
-    // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
-    try {
-      const result = await this.appService.changeSourceLibrary(botId, libraryId);
-      return result;
-    } catch (error) {
-      throw new HttpException('Failed to change the library', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
+  // @Get('/change_library/:library_id')
+  // @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
+  // async changeSourceLibrary(
+  //   @Param('library_id') libraryId: string,
+  //   @Req() req: any & { user: { id: number, username: string } }
+  // ) {
+  //   const botId = await this.userService.getBotIdByUserId(req.user.user.userId);
+  //   // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
+  //   // 销毁conversation_id以便他能根据新的知识库创建一个新的对话
+  //   await this.userService.destroyConversationId(req.user.user.userId);
+    
+  //   try {
+  //     const result = await this.appService.changeSourceLibrary(botId, libraryId);
+  //     return result;
+  //   } catch (error) {
+  //     throw new HttpException('Failed to change the library', HttpStatus.INTERNAL_SERVER_ERROR);
+  //   }
+  // }
 
   //修改机器人使用的知识库(使用标题)
   @Get('/change_libraryBytitle/:title')
   @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
-  async changeSourceLibraryByTittle(@Param('title') title: string) {
+  async changeSourceLibraryByTittle(
+    @Param('title') title: string,
+    @Req() req: any & { user: { id: number, username: string } }
+  
+  ) {
     const libraryId = (await this.articleService.getArticleByTitle(title)).library_id;
-    const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
+    const botId = (await this.userService.getBotIdByUserId(req.user.user.userId)).bot_id;
+    // 销毁conversation_id以便他能根据新的知识库创建一个新的对话
+    await this.userService.destroyConversationId(req.user.user.userId);
+    console.log('libraryId',libraryId);
+    console.log('botId',botId);
+    
+    // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
     try {
       const result = await this.appService.changeSourceLibrary(botId, libraryId);
       return result;

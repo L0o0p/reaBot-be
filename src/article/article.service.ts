@@ -20,6 +20,7 @@ import { DocFile } from './entities/docFile.entity';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from 'src/answer-sheet/entities/questions.entity';
+import { Answer } from 'src/answer-sheet/entities/answers.entity';
 interface MammothMessage {
   type: string; // 'error' | 'warning' 等
   message: string;
@@ -491,6 +492,51 @@ export class ArticleService {
     return await this.articleRepository.findOne({ where: { articleId: articleId } })
   }
 
+  async getAnswersByArticleId(articleId: number): Promise<Answer[]> {
+        // Fetch all questions linked to the article
+        const questions = await this.questionRepository.find({
+            where: { article: { id: articleId } },
+            relations: ['answers'],
+        });
+
+        // Flatten the answers array from each question
+        const answers = questions.reduce((acc, question) => [...acc, ...question.answers], []);
+
+        return answers;
+  }
+  
+  async getLatestAnswerRank(articleId: number): Promise<{ answerId: number; questionId: number; rank: number }> {
+        // Fetch all questions linked to the article with their answers
+        const questions = await this.questionRepository.find({
+            where: { article: { id: articleId } },
+            relations: ['answers'],
+        });
+
+        // Find all answers for filtering later
+        let maxAnswerId = -1;
+        let correspondingQuestion: Question | null = null;
+
+        // Iterate over each question and its answers to find the answer with the maximum ID
+        questions.forEach(question => {
+            const latestAnswerInQuestion = question.answers.reduce((max, current) =>
+                current.id > max.id ? current : max, { id: -1 }
+            );
+            if (latestAnswerInQuestion.id > maxAnswerId) {
+                maxAnswerId = latestAnswerInQuestion.id;
+                correspondingQuestion = question;
+            }
+        });
+
+        // Determine the rank of the corresponding question
+        const sortedQuestions = questions.sort((a, b) => a.id - b.id);
+        const queryRank = sortedQuestions.indexOf(correspondingQuestion!) + 1; // Ranks start from 1
+
+        if (correspondingQuestion && maxAnswerId !== -1) {
+            return { answerId: maxAnswerId, questionId: correspondingQuestion.id, rank: queryRank };
+        } else {
+            throw new Error('No answers found for the article');
+        }
+    }
 }
 
 

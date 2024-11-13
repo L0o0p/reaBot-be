@@ -148,7 +148,7 @@ export class PaperController {
         const paperList = await this.getAllPaper()
         console.log('paperList', paperList);
         // 设定规则，如果没有下一个就选择最初的paper
-        let nextPaperId = currentPaper_id + 1
+        let nextPaperId = await this.paperService.findNextMinId(currentPaper_id)
         if (nextPaperId > paperList.length) { nextPaperId = paperList[0].id }
         // 拿到下一个paper对象
         const nextPaper = await this.paperService.getPaperById(nextPaperId);

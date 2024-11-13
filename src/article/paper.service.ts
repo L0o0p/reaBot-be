@@ -7,7 +7,7 @@ import {
     Logger,
     NotFoundException,
 } from '@nestjs/common';
-import { DataSource, getRepository } from 'typeorm';
+import { DataSource, getRepository, Repository } from 'typeorm';
 import { Article } from './entities/article.entity';
 import { CreateArticle, CreatePaper } from './article.dto';
 import { response } from 'express';
@@ -153,9 +153,9 @@ export class PaperService {
         let answerSheet = await this.answerSheetRepository.findOne({
             where: { paper: { id: paperId }, user: { id: userId } },
         });
-        console.log('answerSheetX',answerSheet);
+        console.log('answerSheetX', answerSheet);
         if (!answerSheet) {
-            answerSheet = this.answerSheetService.CreateAnswerSheet(paperId,userId)
+            answerSheet = this.answerSheetService.CreateAnswerSheet(paperId, userId)
         }
         const answerSheetId = answerSheet.id
         console.log('answerSheetId', answerSheetId);
@@ -216,11 +216,36 @@ export class PaperService {
     }
 
     async findLibraryIdByPaperId(paperId: number): Promise<string | undefined> {
-    const paper = await this.paperRepository.findOne({
-      where: { id: paperId },
-      relations: ['articleA'],  // 确保加载了关联的ArticleA实体
-    });
+        const paper = await this.paperRepository.findOne({
+            where: { id: paperId },
+            relations: ['articleA'],  // 确保加载了关联的ArticleA实体
+        });
 
-    return paper?.articleA?.library_id;  // 返回字符串类型的libraryId
-  }
+        return paper?.articleA?.library_id;  // 返回字符串类型的libraryId
+    }
+
+    // Add this function in your paper.service.ts
+    async getPaperWithSmallestId(): Promise<number> {
+        const minId = await this.paperRepository.createQueryBuilder("paper")
+            .select("MIN(paper.id)", "minId")
+            .getRawOne();
+
+        // Then, retrieve the paper with the minimum id
+        const result = await this.paperRepository.findOne({
+            where: {
+                id: minId.minId
+            }
+        });
+        return result.id
+    }
+
+    async findNextMinId(currentId: number): Promise<number | undefined> {
+        const result = await this.paperRepository
+            .createQueryBuilder("paper")
+            .select("MIN(paper.id)", "minId")
+            .where("paper.id > :currentId", { currentId })
+            .getRawOne();
+
+        return result ? result.minId : undefined;
+    }
 }
