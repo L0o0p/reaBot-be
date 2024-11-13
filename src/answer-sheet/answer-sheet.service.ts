@@ -12,7 +12,7 @@ import { Question } from './entities/questions.entity';
 @Injectable()
 export class AnswerSheetService {
   private answerRepository: Repository<Answer>;
-  private answersheetRepository: Repository<AnswerSheet>;
+  private answerSheetRepository: Repository<AnswerSheet>;
   private paperRepository: Repository<Paper>;
   private questionRepository: Repository<Question>;
   private logger = new Logger('AnswerSheetService');
@@ -21,7 +21,7 @@ export class AnswerSheetService {
     private dataSource: DataSource,
   ) {
     this.answerRepository = this.dataSource.getRepository(Answer);
-    this.answersheetRepository = this.dataSource.getRepository(AnswerSheet);
+    this.answerSheetRepository = this.dataSource.getRepository(AnswerSheet);
     this.paperRepository = this.dataSource.getRepository(Paper);
     this.questionRepository = this.dataSource.getRepository(Question);
   }
@@ -43,14 +43,14 @@ async recordUserAnswer(answerText: number, isCorrect: boolean, questionId: numbe
     console.log('userId:', userId);
 
     // Retrieve the answersheet for the user and paper
-    let answerSheets = await this.answersheetRepository.find({
+    let answerSheets = await this.answerSheetRepository.find({
         where: { paper: { id: paperId }, user: { id: userId } }
     });
 
     // Create an answersheet if none exists
     if (!answerSheets.length) {
         await this.CreateAnswerSheet(paperId, userId);
-        answerSheets = await this.answersheetRepository.find({
+        answerSheets = await this.answerSheetRepository.find({
             where: { paper: { id: paperId }, user: { id: userId } }
         });
     }
@@ -91,7 +91,7 @@ async recordUserAnswer(answerText: number, isCorrect: boolean, questionId: numbe
       paper: { id: paperId },
       user: { id: userId },
     }
-    return await this.answersheetRepository.save(answerSheet)
+    return await this.answerSheetRepository.save(answerSheet)
   }
 
   async findSupplementalQuestionByQuestionId(questionId: number) {

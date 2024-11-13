@@ -202,26 +202,7 @@ export class PaperController {
 
     @Get('currentPaper')
     async getCurrentPaperAndArticle() {
-        // 1. 先根据使用的知识库获取当前文章信息
-        const currentArticleInfo = await this.articleService.getPropertyArticle();
-        const currentArticleId = currentArticleInfo.id
-        // 2. 根据当前文章来获取其绑定的paper
-        const currentPaper = (await this.paperRepository.findOne({
-            where: [
-                { articleAId: currentArticleId, },
-                { articleBId: currentArticleId, }
-            ]
-        }))
-        console.log('newPaper', currentPaper);
-        const paperId = currentPaper.id
-        const articleA = (await this.articleRepository.find({ where: { id: currentPaper.articleAId } }))[0]
-        const articleB = (await this.articleRepository.find({ where: { id: currentPaper.articleBId } }))[0]
-        // 3. 返回paper信息和当前文章信息
-        return {
-            paperId: paperId,
-            articleA: articleA,
-            articleB: articleB
-        };
+        return this.paperService.getCurrentPaper()
     }
 
     //修改机器人使用的知识库(使用标题)
@@ -239,7 +220,7 @@ export class PaperController {
         }))).id
         
         //👉 插入一个计算当前paper总分的函数并且把他录入对应答题卡
-        const currentPaperScore = await this.getPaperScore(
+        const currentPaperScore = await this.paperService.getPaperScore(
             currentPaper_id,
             req.user.user.userId
         )
@@ -316,75 +297,22 @@ export class PaperController {
     }
 
     @Get('/getPaperScore')
-    async getPaperScore(paperId: number, userId: number) {
-        // const articleId = 2;
-        // const answerSheetId = 2;
-        // 取得paperId
-        console.log('userId', userId);
-        console.log('paperId', paperId);
-        // 取得paperId对下的两篇文章的articleId
-        const articleAId = (await this.paperRepository.find({ where: { id: paperId } }))[0].articleAId;
-        const articleBId = (await this.paperRepository.find({ where: { id: paperId } }))[0].articleBId;
-        console.log('articleIdX',articleAId,articleBId);
+    async getPaperScore(@Req() req: any & { user: { id: number, username: string } }) {
+    // 知道现在的article ⬇️
+        const currentArticle_id = (await this.articleService.getPropertyArticle()).id
+        // 知道现在的paper ⬇️
+        const currentPaper_id = ((await this.paperRepository.findOne({
+            where: [
+                { articleAId: currentArticle_id, },
+                { articleBId: currentArticle_id, }
+            ]
+        }))).id
         
-        const answerSheet = await this.answersSheetRepository.findOne({
-    where: { paper: {id:paperId}, user: { id: userId } },
-});
-        const answerSheetId = answerSheet.id
-        console.log('answerSheetId', answerSheetId);
-        
-        let totalScore = 0;
-
-        const questionsA = await this.questionsRepository.find({
-            where: { articleId: articleAId },
-            select: ['id']
-        });
-
-         const questionsB = await this.questionsRepository.find({
-            where: { articleId: articleBId },
-            select: ['id']
-        });
-
-        const questionIdListA = questionsA.map(question => question.id);
-        console.log('questionIdListA:', questionIdListA);
-        const questionIdListB = questionsB.map(question => question.id);
-        console.log('questionIdListB:', questionIdListB);
-        for (const questionId of questionIdListA) {
-            console.log('Checking questionId:', questionId); // 输出当前正在检查的 questionId
-            const answer = await this.answersRepository.findOne({
-                where: {
-                    question: { id: questionId },
-                    answerSheet: { id: answerSheetId },
-                },
-            });
-
-            console.log('Answer for questionId', questionId, ':', answer); // 输出获取到的答案
-
-            if (answer && answer.isCorrect) {
-                console.log('Correct answer for questionId', questionId); // 确认找到正确答案
-                totalScore += 1;
-            }
-        }
-        for (const questionId of questionIdListB) {
-            console.log('Checking questionId:', questionId); // 输出当前正在检查的 questionId
-            const answer = await this.answersRepository.findOne({
-                where: {
-                    question: { id: questionId },
-                    answerSheet: { id: answerSheetId },
-                },
-            });
-
-            console.log('Answer for questionId', questionId, ':', answer); // 输出获取到的答案
-
-            if (answer && answer.isCorrect) {
-                console.log('Correct answer for questionId', questionId); // 确认找到正确答案
-                totalScore += 1;
-            }
-        }
-
-        console.log('Total Score:', totalScore); // 输出最终总分
-        this.answersSheetRepository.update({ id: answerSheetId }, { totalScore: totalScore });// 更新答案表的分数
-        return totalScore;
-
+        //👉 插入一个计算当前paper总分的函数并且把他录入对应答题卡
+        const currentPaperScore = await this.paperService.getPaperScore(
+            currentPaper_id,
+            req.user.user.userId
+        )
+        return currentPaperScore
     }
 }

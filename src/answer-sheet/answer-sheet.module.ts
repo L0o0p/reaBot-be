@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AnswerSheetService } from './answer-sheet.service';
 import { AnswerSheetController } from './answer-sheet.controller';
 import { Article } from 'src/article/entities/article.entity';
@@ -17,6 +17,6 @@ import { SupplementalQuestion } from './entities/supplementalQuestion.entity';
 @Module({
   controllers: [AnswerSheetController,ArticleController,DifyController],
   providers: [AnswerSheetService,ArticleService,DifyService],
-  imports: [DifyModule, ArticleModule, TypeOrmModule.forFeature([Article, File,Question,AnswerSheet,Paper,SupplementalQuestion])]// 
+  imports: [DifyModule, forwardRef(() => ArticleModule), TypeOrmModule.forFeature([Article, File,Question,AnswerSheet,Paper,SupplementalQuestion])]// 
 })
 export class AnswerSheetModule {}

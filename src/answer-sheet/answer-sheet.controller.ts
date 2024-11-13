@@ -24,7 +24,7 @@ export class AnswerSheetController {
     @InjectRepository(SupplementalQuestion)
     private supplementalQuestion: Repository<SupplementalQuestion>,
     // @InjectRepository(AnswerSheet)
-    // private answersheetRepository: Repository<AnswerSheet>,
+    // private answerSheetRepository: Repository<AnswerSheet>,
     // @InjectRepository(Paper)
     // private paperRepository: Repository<Paper>,
     // @InjectRepository(Answer)
@@ -41,6 +41,8 @@ export class AnswerSheetController {
     console.log('body:', body);
     const articleId = (await this.articleService.getPropertyArticle()).id
     console.log('articleIdX', articleId);
+    console.log('req',req);
+    
 
     // 1. 从知识库获取此题正确答案
     // const matchQuestion = (await this.questionRepository.find({ where: { articleId: articleId, id: body.questionIndex } }))[0];
@@ -84,8 +86,10 @@ export class AnswerSheetController {
                 
       };
       const questionString = question.question+question.options.join()
-      const info = {information:`对于这道题${questionString}，请根据文章内容给我答案解析，帮助我理解和进步`}
-      const answerAnalysis = await this.chatService.sendInfo(info, req.user.user)||'答案解析：回答错误 ⛽️ 再接再厉'
+      const info = { information: `对于这道题${questionString}，请根据文章内容给我答案解析，帮助我理解和进步` }
+      console.log('req.user',req.user);
+      
+      const answerAnalysis = await this.chatService.sendInfo(info, req.user)||'答案解析：回答错误 ⛽️ 再接再厉'
       // const answerAnalysis = (await this.chatService.sendInfo({ information: info }, req.user)).answer;//return { conversation_id, answer };
       // console.log( 'answerAnalysis', answerAnalysis);
       
