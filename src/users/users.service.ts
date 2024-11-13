@@ -99,9 +99,9 @@ export class UsersService {
   }
 
     async getBotIdByUserId(userId:number) {
-    return await this.userRepository.find({
-      where: { userId: userId },
-      select: ['botId']
+    return await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['bot_id']
     });
   }
 }

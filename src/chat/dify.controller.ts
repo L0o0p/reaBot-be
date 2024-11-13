@@ -58,7 +58,7 @@ export class DifyController {
   @Get('/change_library/:library_id')
   @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
   async changeSourceLibrary(@Param('library_id') libraryId: string, @Req() req: any & { user: { id: number, username: string } }) {
-    const botId = await this.userService.getBotIdByUserId(req.user.id);
+    const botId = await this.userService.getBotIdByUserId(req.user.user.userId);
     // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
     try {
       const result = await this.appService.changeSourceLibrary(botId, libraryId);
@@ -88,4 +88,22 @@ export class DifyController {
     return this.appService.getChatlog(req.user.user);
   }
 
+  // 创建新的coversation
+  @Get('new_conversation')
+  async newConversation() {
+    const url = 'https://dify.cyte.site/api/site'
+    const difyUserToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjE2ZWJiZDQtZDQxOS00NzkxLTg1YTktZTVmNDdmMDczNDIwIiwiZXhwIjoxNzMyMjY1NTcxLCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.W4UEiOy1pQkCSe5d3ZB3VyyNUTKJHKFegXXQjYuUeL8'
+    const header = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${difyUserToken}`
+    };
+    const options = {
+      method: 'GET',
+      headers: header,
+    };
+    const response = await fetch(url, options);
+    const data = await response.json();
+    return data;
+  }
+  
 }

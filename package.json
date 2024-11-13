@@ -46,6 +46,7 @@
     "run-script-webpack-plugin": "^0.2.0",
     "rxjs": "^7.8.1",
     "ts": "^0.2.2",
+    "tsc": "^2.0.4",
     "typeorm": "^0.3.20",
     "webpack": "^5.96.1",
     "webpack-node-externals": "^3.0.0"

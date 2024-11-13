@@ -35,4 +35,4 @@ import { Global, Module } from '@nestjs/common';
   ],
   exports: [DataSource],
 })
-export class TypeOrmModule {}
+export class Database {}
