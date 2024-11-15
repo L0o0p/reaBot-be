@@ -39,9 +39,9 @@ export class AnswerSheetController {
   ) {
     console.log('receviedAnswer:', body.answer);
     console.log('body:', body);
-    const articleId = (await this.articleService.getPropertyArticle(req.user.user.userId)).id
+    console.log('req',req.user);
+    const articleId = (await this.articleService.getPropertyArticle(req.user.userId)).id
     console.log('articleIdX', articleId);
-    console.log('req',req);
     
 
     // 1. 从知识库获取此题正确答案

@@ -1,5 +1,8 @@
 import { DataSource } from 'typeorm';
 import { Global, Module } from '@nestjs/common';
+import * as dotenv from 'dotenv';
+
+dotenv.config(); // Loads the environment variables from .env file
 
 @Global() // makes the module available globally for other modules once imported in the app modules
 @Module({
@@ -13,12 +16,11 @@ import { Global, Module } from '@nestjs/common';
         try {
           const dataSource = new DataSource({
             type: 'postgres',
-            host: '10.0.1.31',
-            port:
-              5432,
-            username: 'postgres',
-            password: 'User1234',
-            database: 'readbot',
+            host: process.env.DB_HOST,
+            port: parseInt(process.env.DB_PORT, 10),
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_DATABASE,
             // entities: [User],
             synchronize: true,
             entities: [`${__dirname}/../**/**.entity{.ts,.js}`], // this will automatically load all entity file in the src folder

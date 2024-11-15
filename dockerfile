@@ -17,7 +17,7 @@ COPY . .
 RUN yarn build
 
 # 生产环境
-FROM --platform=linux/arm64 node:22
+FROM --platform=linux/amd64 node:22
 
 WORKDIR /usr/src/app
 
