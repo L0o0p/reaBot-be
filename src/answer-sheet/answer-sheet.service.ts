@@ -46,6 +46,8 @@ async recordUserAnswer(answerText: number, isCorrect: boolean, questionId: numbe
     let answerSheets = await this.answerSheetRepository.find({
         where: { paper: { id: paperId }, user: { id: userId } }
     });
+  console.log("answerSheetsX",answerSheets);
+  
 
     // Create an answersheet if none exists
     if (!answerSheets.length) {

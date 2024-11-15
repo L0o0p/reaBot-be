@@ -1,9 +1,7 @@
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
-  NotFoundException,
 } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Dify } from './dify.entity';
@@ -64,6 +62,7 @@ export class DifyService {
 
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
     console.log('user_found', user_found);
+    console.log('user_found.bot_key', user_found.bot_key);
     const url = `${this.DIFY_URL}/v1/chat-messages`;
     const apiKey = user_found.bot_key;  // 使用正确的API密钥
     const headers = {
@@ -284,8 +283,9 @@ export class DifyService {
   }
   // 更改机器人使用的知识库
   async changeSourceLibrary(bot_Id: string, switchLibraryId: string) {
+    console.log('bot_IdX',bot_Id);
     const url = `${this.DIFY_URL}/console/api/apps/${bot_Id}/model-config`;
-    console.log('url', url);
+    console.log('urlX', url);
 
     try {
       const response = await fetch(url, {

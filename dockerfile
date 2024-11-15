@@ -8,7 +8,10 @@ WORKDIR /usr/src/app
 COPY package.json ./
 
 # 安装项目依赖
-RUN yarn install --frozen-lockfile
+# RUN yarn install --frozen-lockfile
+RUN --mount=type=cache,id=yarnbe,target=/cache/.yarn,sharing=locked \
+    yarn install --frozen-lockfile --cache-folder=/cache/.yarn/
+
 
 # 复制项目文件到工作目录
 COPY . .
@@ -26,7 +29,9 @@ COPY --from=builder /usr/src/app/dist ./dist
 COPY package.json ./
 
 # 只安装运行时所需的依赖
-RUN yarn install --production
+# RUN yarn install --production
+RUN --mount=type=cache,id=yarnberuntime,target=/cache/.yarn,sharing=locked \
+    yarn install --production --cache-folder=/cache/.yarn/
 
 # 暴露端口
 EXPOSE 3000

@@ -1,18 +1,15 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards } from '@nestjs/common';
 import { AnswerSheetService } from './answer-sheet.service';
-import { CreateAnswerSheetDto } from './dto/create-answer-sheet.dto';
-import { UpdateAnswerSheetDto } from './dto/update-answer-sheet.dto';
 import { ArticleService } from 'src/article/article.service';
 import { Repository } from 'typeorm';
 import { Question } from './entities/questions.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AnswerSheet } from './entities/answer-sheet.entity';
-import { Paper } from 'src/article/entities/paper.entity';
-import { Answer } from './entities/answers.entity';
-import { AuthGuard } from '@nestjs/passport';
+// import { AuthGuard } from '@nestjs/passport';
 import { DifyService } from 'src/chat/dify.service';
-import { SupplementalQuestion } from './entities/supplementalQuestion.entity';
+import { JwtAuthGuard } from 'src/auth/jwt.guard';
+// import { SupplementalQuestion } from './entities/supplementalQuestion.entity';
 
+@UseGuards(JwtAuthGuard)
 @Controller('answer-sheet')
 export class AnswerSheetController {
   constructor(
@@ -21,8 +18,8 @@ export class AnswerSheetController {
   private readonly chatService: DifyService,
     @InjectRepository(Question)
     private questionRepository: Repository<Question>,
-    @InjectRepository(SupplementalQuestion)
-    private supplementalQuestion: Repository<SupplementalQuestion>,
+    // @InjectRepository(SupplementalQuestion)
+    // private supplementalQuestion: Repository<SupplementalQuestion>,
     // @InjectRepository(AnswerSheet)
     // private answerSheetRepository: Repository<AnswerSheet>,
     // @InjectRepository(Paper)
@@ -32,18 +29,25 @@ export class AnswerSheetController {
   ) { }
 
   @Post('submit')
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   async submitSingleAnswer(
     @Body() body: { answer: number, questionIndex: number },
-    @Req() req: any & { user: { id: number, username: string } }
+    @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
   ) {
     console.log('receviedAnswer:', body.answer);
     console.log('body:', body);
     console.log('req',req.user);
-    const articleId = (await this.articleService.getPropertyArticle(req.user.userId)).id
+    const articleId = (await this.articleService.getPropertyArticle(req.user.user.userId)).id
     console.log('articleIdX', articleId);
     
-
     // 1. 从知识库获取此题正确答案
     // const matchQuestion = (await this.questionRepository.find({ where: { articleId: articleId, id: body.questionIndex } }))[0];
     // const correctAnswer = Number(matchQuestion.correctAnswer )
@@ -66,7 +70,7 @@ export class AnswerSheetController {
       isCorrect,
       questionID, //这里是题号，从1开始计数，但是要传入的是questionid，应该是根据articleid和questionindex来找到这道题本身的id:
       articleId,
-      req.user.userId
+      req.user.user.userId
     )
     if (isCorrect) {
       console.log('Correct');
@@ -107,15 +111,23 @@ export class AnswerSheetController {
     }
   }
 
-    @Post('submitSupplemental')
-  @UseGuards(AuthGuard('jwt'))
+  @Post('submitSupplemental')
+  // @UseGuards(AuthGuard('jwt'))
   async submiSsubmitSupplementalAnswer(
     @Body() body: { answer: number, questionIndex: number },
-    @Req() req: any & { user: { id: number, username: string } }
+    @Req() req: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+      }
+    }
   ) {
     console.log('receviedAnswer:', body.answer);
-    console.log('body:', body);
-    const articleId = (await this.articleService.getPropertyArticle(req.user.user.userId)).id
+      console.log('body:', body);
+      console.log(req.user.userId);
+      
+    const articleId = (await this.articleService.getPropertyArticle(req.user.userId)).id
     console.log('articleIdX', articleId);
 
     // 1. 从知识库获取此题正确答案

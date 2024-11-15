@@ -14,6 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from 'src/answer-sheet/entities/questions.entity';
 import { AnswerSheet } from 'src/answer-sheet/entities/answer-sheet.entity';
 import { Answer } from 'src/answer-sheet/entities/answers.entity';
+import { UsersService } from 'src/users/users.service';
 
 
 
@@ -22,6 +23,7 @@ import { Answer } from 'src/answer-sheet/entities/answers.entity';
 export class PaperController {
     logger: any;
     constructor(
+        private readonly userService: UsersService,
         private readonly chatService: DifyService,
         private readonly articleService: ArticleService,
         private readonly paperService: PaperService,
@@ -119,7 +121,15 @@ export class PaperController {
 
     @Get('currentPaper')
     async getCurrentPaperAndArticle(
-    @Req() req: any & { user: { id: number, username: string } }
+    @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
     ) {
         console.log('req.user.user.userId',req.user.user.userId);
         return this.paperService.getCurrentPaper(req.user.user.userId)
@@ -128,7 +138,17 @@ export class PaperController {
     //修改机器人使用的知识库(使用标题)
     @Get('/nextPaper')
     @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
-    async changeSourceLibraryByTittle(@Req() req: any & { user: { id: number, username: string } }) {
+    async changeSourceLibraryByTittle(
+        @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
+    ) {
         // 知道现在的article ⬇️
         const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.user.userId)).id
         // 知道现在的paper ⬇️
@@ -185,7 +205,7 @@ export class PaperController {
         };
         // return newPaper
         // 切换到articleA_title对应的知识库
-        const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
+        const botId = (await this.userService.getBotIdByUserId(req.user.user.userId)).bot_id;
 
         const nextLibraryId = (await this.articleRepository.find({ where: { id: articleAId } }))[0].library_id
         console.log('nextLibraryId:', nextLibraryId);
@@ -204,22 +224,31 @@ export class PaperController {
             previousPaperScore:currentPaperScore,
             paperId: newPaperId,//paperId
             articleA: {
-                title: articleA_Text,
+                title: articleA_title,
                 content: articleA_Text,
             },
             articleB: {
-                title: articleB_Text,
+                title: articleB_title,
                 content: articleB_Text,
             },
+            result:result
         }
         return feedback
     }
 
     @Get('/getPaperScore')
     async getPaperScore(
-        @Req() req: any & { user: { id: number, username: string } }
+        @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
     ) {
-    // 知道现在的article ⬇️
+        // 知道现在的article ⬇️
         const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.user.userId)).id
         console.log('currentArticle_id',currentArticle_id);
         

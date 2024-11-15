@@ -7,9 +7,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { DifyService } from 'src/chat/dify.service';
 import * as mammoth from 'mammoth';
 import { Question } from 'src/answer-sheet/entities/questions.entity';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaperService } from './paper.service';
+import { UsersService } from 'src/users/users.service';
 
 
 interface QuestionItem {
@@ -24,7 +25,8 @@ export class ArticleController {
     private readonly appService: ArticleService,
     private readonly paperService: PaperService,
     private readonly chatService: DifyService,
-    private dataSource: DataSource,
+    // private dataSource: DataSource,
+    private userService: UsersService,
     @InjectRepository(Question)
     private questionRepository: Repository<Question>,
   ) { }
@@ -66,7 +68,15 @@ export class ArticleController {
   @UseInterceptors(FileInterceptor('file'))
   async upload_AnswerFileTodify(
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any & { user: { id: number, username: string } }
+    @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
   ) {
     // 1. 接受文档
     const article_title = file.originalname.split('.')[0] // 获取文件名
@@ -105,7 +115,15 @@ export class ArticleController {
   @UseInterceptors(FileInterceptor('file'))
   async upload_QuestionsFileTodify(
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: any & { user: { id: number, username: string } }
+    @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
   ) {
     // 1. 接受文档
     const article_title = file.originalname.split('.')[0] // 获取文件名
@@ -191,15 +209,32 @@ export class ArticleController {
   // 获取所有dify知识库文档列表
   @Get('/library/files')
   async getDifyLibraryFiles(
-    @Req() req: any & { user: { id: number, username: string } }
+    @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
   ) {
-    return this.appService.fetchDifyLibraryFiles(req.user.user.userId);
+    const botId = (await this.userService.getBotIdByUserId(req.user.user.userId)).bot_id;
+    return this.appService.fetchDifyLibraryFiles(botId);
   }
 
   // 获取所用dify知识库文档列表中对应的文章
   @Get('/propertyArticle')
   async getPropertyArticle(
-    @Req() req: any & { user: { id: number, username: string } }
+    @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
   ) {
     return this.appService.getPropertyArticle(req.user.user.userId);
   }
@@ -262,12 +297,21 @@ export class ArticleController {
   // 获取当前文章的questions的doc文本
   @Get('get/doc_text')
   async getDocText(
-    @Req() req: any & { user}
+    @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
   ) {
     console.log('proX');
-    const library_id = await this.chatService.fetchBotLibraryId(req.user.user.usr_id);
+    console.log('req.user.user.usrId',req.user.user.userId);
+    const library_id = await this.chatService.fetchBotLibraryId(req.user.user.userId);
     console.log('library_id', library_id);
-    const title = (await this.chatService.getArticleName(library_id,req.user.ueser.userId)).title + '.docx'
+    const title = (await this.chatService.getArticleName(library_id,req.user.user.userId)).title + '.docx'
     console.log('titleX:', title);
     const tag = 'questions'
     const articleQuestions: string[] = await this.appService.getDocumentByNameAndTag(title, tag)
@@ -276,7 +320,15 @@ export class ArticleController {
 
   @Get('get/questions')
   async getQuestions(
-    @Req() req: any & { user: { id: number, username: string } }
+    @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
   ) {
     console.log('req.user.user.userId',req.user.user.userId);
     const library_id = await this.chatService.fetchBotLibraryId(req.user.user.userId)
@@ -290,7 +342,15 @@ export class ArticleController {
 
   @Get('get/progress')
   async getProcceed(
-    @Req() req: any & { user: { id: number, username: string } }
+    @Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }
   ) {
     const currentArticle = (await this.appService.getPropertyArticle(req.user.user.userId))
     const article_id = currentArticle.id

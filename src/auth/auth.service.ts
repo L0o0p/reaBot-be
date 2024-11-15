@@ -2,8 +2,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  HttpException,
-  HttpStatus,
   InternalServerErrorException,
   BadRequestException,
 } from '@nestjs/common';
@@ -66,9 +64,10 @@ export class AuthService {
    * @param user
    * @returns
    */
-  createToken(user) {
+  createToken(user: User) {
     const payload = {
       id: user.id,
+      userId: user.id,
       username: user.username,
     };
     try {

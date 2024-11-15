@@ -74,7 +74,15 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   //   handles the post request to /users/create endpoint to create new user
-  async gerProfile(@Req() req: any & { user: { id: number, username: string } }) {
+  async gerProfile(@Req() req: {
+      user: {
+        user: {
+          id: number;
+          userId: number;
+          username: string;
+        }
+      }
+    }) {
     console.log(req.user.user);
     return await this.userService.findByUsername(req.user.user.username);
   }

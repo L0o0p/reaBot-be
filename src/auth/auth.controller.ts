@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Res,
   UseGuards,
 } from '@nestjs/common';
 import { User } from 'src/users/entity/users.entity';
