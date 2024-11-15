@@ -1,0 +1,13 @@
+# 忽略node_modules
+node_modules/
+
+# 如果确实需要忽略yarn.lock
+yarn.lock
+
+# 可能还想忽略其他不必要的文件
+.git
+.gitignore
+.DS_Store
+npm-debug.log
+logs
+tmp

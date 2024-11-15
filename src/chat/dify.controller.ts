@@ -16,6 +16,17 @@ export class DifyController {
   ) {
     // const current_database_id = this.appService.getCurrentDatabaseId();
   }
+
+  @Get('test')
+  async test(
+    @Req() req: any & { user}
+  ) {
+    const botId = await this.appService.getBotIdByUserId(req.user.user.userId)
+    return {
+      botId: botId,
+      user:req.user.user
+    }
+    }
   // 发送聊天消息
   @Post('/send')
   async sendInformation(
@@ -27,9 +38,12 @@ export class DifyController {
   }
   // 发送聊天消息（使用questions的tips提问）
   @Post('/gettips')
-  async sendPromptInformation(@Body() info: askForTips, @Req() req: any & { user: { id: number, username: string } }) {
-    const library_id = await this.appService.fetchBotLibraryId()
-    const title = (await this.appService.getArticleName(library_id)).title+'.docx'
+  async sendPromptInformation(
+    @Body() info: askForTips,
+    @Req() req: any & { user: { id: number, username: string } }
+  ) {
+    const library_id = await this.appService.fetchBotLibraryId( req.user.user)
+    const title = (await this.appService.getArticleName(library_id,req.user.user.userId)).title+'.docx'
     console.log('title',title);
     // info = "question"+"tips"
     const articleQuestions: string[] = await this.articleService.getDocumentByNameAndTag(title, 'questions')
@@ -40,16 +54,23 @@ export class DifyController {
   }
   // 从本地获取机器人正在使用的知识库对应的文章
   @Get('/articleUsedByBot')
-  async getBottest() {
-    const library_id = await this.appService.fetchBotLibraryId()
+  async getBottest(
+    @Req() req: any & { user: { id: number, username: string } }
+  ) {
+    const library_id = await this.appService.fetchBotLibraryId(req.user.user)
     console.log('library_id', library_id);
-    return this.appService.getArticleName(library_id)
+    return this.appService.getArticleName(library_id,req.user.user.userId)
     //预期返回：{"title":"节日快乐","library_id":"15e4c247-aa06-41c9-b4a2-25e49e977af5"}
   }
   // 获取机器人信息
   @Get('/bot-info')
-  async fetchBotInfo() {
-    const bot_info = await this.appService.fetchBotInfo()
+  async fetchBotInfo(
+    @Req() req: any & { user: { id: number, username: string } }
+  ) {
+    console.log('req.user.user.userId',req.user.user.userId);
+    const bot_id = await this.appService.getBotIdByUserId(req.user.user.userId)
+    console.log('bot_id',bot_id);
+    const bot_info = await this.appService.fetchBotInfo(bot_id)
     //知识库id
     const libraryId = bot_info.model_config.dataset_configs.datasets.datasets[0].dataset.id
     console.log("log", libraryId);
@@ -110,19 +131,7 @@ export class DifyController {
   // 创建新的coversation
   @Get('new_conversation')
   async newConversation() {
-    const url = 'https://dify.cyte.site/api/site'
-    const difyUserToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjE2ZWJiZDQtZDQxOS00NzkxLTg1YTktZTVmNDdmMDczNDIwIiwiZXhwIjoxNzMyMjY1NTcxLCJpc3MiOiJTRUxGX0hPU1RFRCIsInN1YiI6IkNvbnNvbGUgQVBJIFBhc3Nwb3J0In0.W4UEiOy1pQkCSe5d3ZB3VyyNUTKJHKFegXXQjYuUeL8'
-    const header = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${difyUserToken}`
-    };
-    const options = {
-      method: 'GET',
-      headers: header,
-    };
-    const response = await fetch(url, options);
-    const data = await response.json();
-    return data;
+    return await this.appService.newConversation();
   }
   
 }

@@ -64,7 +64,10 @@ export class ArticleController {
   // 接受文档并且存储到本地数据库(问题)并拿出来存到answer数据表里
   @Post('answers_doc_dify')
   @UseInterceptors(FileInterceptor('file'))
-  async upload_AnswerFileTodify(@UploadedFile() file: Express.Multer.File) {
+  async upload_AnswerFileTodify(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any & { user: { id: number, username: string } }
+  ) {
     // 1. 接受文档
     const article_title = file.originalname.split('.')[0] // 获取文件名
     console.log('file', file);
@@ -83,7 +86,7 @@ export class ArticleController {
     console.log('savableData', savableData);
     // 4. 存储doc内的文本内容到数据库
     // 获取这个文件的名字=>title=>article_id&questions_id来判断存在哪里
-    const articleId = (await this.appService.getPropertyArticle()).id
+    const articleId = (await this.appService.getPropertyArticle(req.user.user.userId)).id
     console.log('articleIdX', articleId);
 
     savableData.forEach(async (item: any, index: number) => {
@@ -100,7 +103,10 @@ export class ArticleController {
   // 接受文档并且存储到本地数据库(问题)
   @Post('qdoc_dify')
   @UseInterceptors(FileInterceptor('file'))
-  async upload_QuestionsFileTodify(@UploadedFile() file: Express.Multer.File) {
+  async upload_QuestionsFileTodify(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any & { user: { id: number, username: string } }
+  ) {
     // 1. 接受文档
     const article_title = file.originalname.split('.')[0] // 获取文件名
     console.log('article_title', article_title);
@@ -118,7 +124,7 @@ export class ArticleController {
     // Splitting the text into chunks based on double newlines
     const chunks = rawText.split('\n\n\n'); // 分开每个「问题块」
     console.log('Chunks:', chunks);
-    const articleId = (await this.appService.getPropertyArticle()).id
+    const articleId = (await this.appService.getPropertyArticle(req.user.user.userId)).id
 
     for (const chunk of chunks) {// 对于每个「问题块」：
       const lines = chunk.split('\n').filter(line => line.trim() !== '');
@@ -184,14 +190,18 @@ export class ArticleController {
 
   // 获取所有dify知识库文档列表
   @Get('/library/files')
-  async getDifyLibraryFiles() {
-    return this.appService.fetchDifyLibraryFiles();
+  async getDifyLibraryFiles(
+    @Req() req: any & { user: { id: number, username: string } }
+  ) {
+    return this.appService.fetchDifyLibraryFiles(req.user.user.userId);
   }
 
   // 获取所用dify知识库文档列表中对应的文章
   @Get('/propertyArticle')
-  async getPropertyArticle() {
-    return this.appService.getPropertyArticle();
+  async getPropertyArticle(
+    @Req() req: any & { user: { id: number, username: string } }
+  ) {
+    return this.appService.getPropertyArticle(req.user.user.userId);
   }
 
   // 根据 ID 获取本地存储的文章
@@ -251,11 +261,13 @@ export class ArticleController {
 
   // 获取当前文章的questions的doc文本
   @Get('get/doc_text')
-  async getDocText() {
+  async getDocText(
+    @Req() req: any & { user}
+  ) {
     console.log('proX');
-    const library_id = await this.chatService.fetchBotLibraryId()
+    const library_id = await this.chatService.fetchBotLibraryId(req.user.user.usr_id);
     console.log('library_id', library_id);
-    const title = (await this.chatService.getArticleName(library_id)).title + '.docx'
+    const title = (await this.chatService.getArticleName(library_id,req.user.ueser.userId)).title + '.docx'
     console.log('titleX:', title);
     const tag = 'questions'
     const articleQuestions: string[] = await this.appService.getDocumentByNameAndTag(title, tag)
@@ -263,9 +275,12 @@ export class ArticleController {
   }
 
   @Get('get/questions')
-  async getQuestions() {
-    const library_id = await this.chatService.fetchBotLibraryId()
-    const title = (await this.chatService.getArticleName(library_id)).title
+  async getQuestions(
+    @Req() req: any & { user: { id: number, username: string } }
+  ) {
+    console.log('req.user.user.userId',req.user.user.userId);
+    const library_id = await this.chatService.fetchBotLibraryId(req.user.user.userId)
+    const title = (await this.chatService.getArticleName(library_id,req.user.user.userId)).title
     const article_id = (await this.getUserById(title)).id
     console.log('article_id', article_id);
 
@@ -274,14 +289,16 @@ export class ArticleController {
   }
 
   @Get('get/progress')
-  async getProcceed() {
-    const currentArticle = (await this.appService.getPropertyArticle())
+  async getProcceed(
+    @Req() req: any & { user: { id: number, username: string } }
+  ) {
+    const currentArticle = (await this.appService.getPropertyArticle(req.user.user.userId))
     const article_id = currentArticle.id
     const index = (await this.appService.getLatestAnswerRank(article_id)).rank
     console.log(`当前做到${currentArticle.id}. ${currentArticle.title}的第${index}题`);
     return index
     const currentAnswers = await this.appService.getAnswersByArticleId(article_id)
-    const currentPaper = await this.paperService.getCurrentPaper()
+    const currentPaper = await this.paperService.getCurrentPaper(req.user.user.userId)
     const currentProgress = {
       paper: currentPaper,
       article:currentArticle,

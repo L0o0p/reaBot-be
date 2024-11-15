@@ -118,8 +118,11 @@ export class PaperController {
     }
 
     @Get('currentPaper')
-    async getCurrentPaperAndArticle() {
-        return this.paperService.getCurrentPaper()
+    async getCurrentPaperAndArticle(
+    @Req() req: any & { user: { id: number, username: string } }
+    ) {
+        console.log('req.user.user.userId',req.user.user.userId);
+        return this.paperService.getCurrentPaper(req.user.user.userId)
     }
 
     //修改机器人使用的知识库(使用标题)
@@ -127,7 +130,7 @@ export class PaperController {
     @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
     async changeSourceLibraryByTittle(@Req() req: any & { user: { id: number, username: string } }) {
         // 知道现在的article ⬇️
-        const currentArticle_id = (await this.articleService.getPropertyArticle()).id
+        const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.user.userId)).id
         // 知道现在的paper ⬇️
         const currentPaper_id = ((await this.paperRepository.findOne({
             where: [
@@ -190,8 +193,7 @@ export class PaperController {
         const result = await this.chatService.changeSourceLibrary(botId, nextLibraryId);
 
         // 再次获取知识库，看看现在用的是什么知识库（library_id,articleTitle,paperId)
-        const newLibraryId = await this.chatService.fetchBotLibraryId()
-        const newArticleTitle = await this.chatService.getArticleName(newLibraryId)
+        const newLibraryId = await this.chatService.fetchBotLibraryId(req.user.user.userId)
         const newPaperId = (await this.paperRepository.findOne({
             where: [
                 { articleAId: articleAId },
@@ -214,9 +216,13 @@ export class PaperController {
     }
 
     @Get('/getPaperScore')
-    async getPaperScore(@Req() req: any & { user: { id: number, username: string } }) {
+    async getPaperScore(
+        @Req() req: any & { user: { id: number, username: string } }
+    ) {
     // 知道现在的article ⬇️
-        const currentArticle_id = (await this.articleService.getPropertyArticle()).id
+        const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.user.userId)).id
+        console.log('currentArticle_id',currentArticle_id);
+        
         // 知道现在的paper ⬇️
         const currentPaper_id = ((await this.paperRepository.findOne({
             where: [

@@ -22,8 +22,9 @@ export class DifyService {
       context_dbs: []
     }
   private logger = new Logger('DifyService');
+  private difyDatabaseKey: string;
+  private DIFY_URL: string;
   private difyUserToken: string;
-
   constructor(
     private dataSource: DataSource,
     private configService: ConfigService
@@ -31,17 +32,39 @@ export class DifyService {
     this.articleRepository = this.dataSource.getRepository(Dify);
     this.userRepository = this.dataSource.getRepository(User);
     this.difyUserToken = this.configService.get<string>('DIFY_USER_TOKEN');
+    this.DIFY_URL = this.configService.get<string>('DIFY_URL');
+    this.difyDatabaseKey = this.configService.get<string>('DIFY_DATABASE_KEY');
     // this.fetchBotInfo()
+  }
+
+  async getBotIdByUserId(userId: number): Promise<string | null> {
+    console.log('userId', userId);
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    console.log('user_found', user);
+    if (user) {
+      return user.bot_id
+    }
+    return null;
+  }
+
+  async getBotKeyByUserId(userId: number): Promise<string | null> {
+    console.log('userId', userId);
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    console.log('user_found', user);
+    if (user) {
+      return user.bot_key
+    }
+    return null;
   }
   // 发送对话消息
   async sendInfo(info: information, user) {
     // userId -> User
-    console.log('informationX',info);
-    console.log('user:',user);
-    
+    console.log('informationX', info);
+    console.log('user:', user);
+
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
     console.log('user_found', user_found);
-    const url = 'https://dify.cyte.site:2097/v1/chat-messages';
+    const url = `${this.DIFY_URL}/v1/chat-messages`;
     const apiKey = user_found.bot_key;  // 使用正确的API密钥
     const headers = {
       'Authorization': `Bearer ${apiKey}`,
@@ -93,7 +116,7 @@ export class DifyService {
     }
   }
   //给获取当前用户的聊天历史记录
-  async getChatlog(user: { userId: number, username: string }) {
+  async getChatlog(user) {
     // userId -> User
     console.log('id', user.userId);
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
@@ -103,13 +126,14 @@ export class DifyService {
     const username = userID
     const conversationId = user_found.conversation_id; // 如果 conversation_id 有具体值，请填写在这里
     console.log('找到对应的conversationId', conversationId);
-    const url = `https://dify.cyte.site:2097/v1/messages?user=${username}&conversation_id=${conversationId}&limit=100&first_id=`;
-    const apiKey = 'app-8rXZUovD1x6yBACSZBW9JICy'; // Replace 'YOUR_API_KEY' with your actual API key
-    return this.fetchData(url, apiKey)
-
+    console.log('1');
+    
+      const url = `${this.DIFY_URL}/v1/messages?user=${username}&conversation_id=${conversationId}&limit=100&first_id=`;
+      const apiKey = await this.getBotKeyByUserId(user.userId); // Replace 'YOUR_API_KEY' with your actual API key
+      return this.fetchData(url, apiKey)
   }
   //给获取当前用户的聊天历史记录-执行方法
-  async fetchData(url, apiKey) {
+  async fetchData(url:string, apiKey:string) {
     return fetch(url, {
       method: 'GET', // 指定请求方法为 GET
       headers: {
@@ -128,12 +152,21 @@ export class DifyService {
         throw error; // 将错误向上抛出，以便调用者可以处理
       });
   }
+
+  async getSubstringAfterDash(str) {
+    const index = str.indexOf('-');
+    if (index !== -1) {
+      return str.substring(index + 1);
+    }
+    return ''; // 如果没有找到 "-", 返回空字符串
+  }
+
   // 获取机器人信息(主要是为了获取机器人使用的知识库id)
-  async fetchBotLibraryId() {
+  async fetchBotLibraryId(user) {
     try {
       // You should use await with fetch to handle the promise properly
-      const botID = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00'
-      const response = await fetch(`https://dify.cyte.site:2097/console/api/apps/${botID}`, {
+      const botId = await this.getBotIdByUserId(user)
+      const response = await fetch(`${this.DIFY_URL}/console/api/apps/${botId}`, {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
@@ -148,7 +181,7 @@ export class DifyService {
           "sec-fetch-dest": "empty",
           "sec-fetch-mode": "cors",
           "sec-fetch-site": "same-origin",
-          "Referer": "https://dify.cyte.site:2097/app/a2ff7b15-cfc4-489d-96cf-307d33c43b00/configuration",
+          "Referer": `${this.DIFY_URL}/app/${botId}/configuration`,
           "Referrer-Policy": "strict-origin-when-cross-origin"
         },
         method: "GET"
@@ -170,10 +203,11 @@ export class DifyService {
     }
   }
   // 通过知识库id获取文章title
-  async getArticleName(id: string) {
+  async getArticleName(id: string, userId: number) {
     try {
       // You should use await with fetch to handle the promise properly
-      const response = await fetch(`https://dify.cyte.site:2097/console/api/datasets?page=1&ids=${id}`, {
+      const botId = await this.getBotIdByUserId(userId)
+      const response = await fetch(`${this.DIFY_URL}/console/api/datasets?page=1&ids=${id}`, {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
@@ -188,7 +222,7 @@ export class DifyService {
           "sec-fetch-dest": "empty",
           "sec-fetch-mode": "cors",
           "sec-fetch-site": "same-origin",
-          "Referer": "https://dify.cyte.site:2097/app/a2ff7b15-cfc4-489d-96cf-307d33c43b00/configuration",
+          "Referer": `${this.DIFY_URL}/app/${botId}/configuration`,
           "Referrer-Policy": "strict-origin-when-cross-origin"
         },
         method: "GET"
@@ -201,7 +235,7 @@ export class DifyService {
       }
       // Parse the JSON from the response
       const data = await response.json();
-      console.log('data.data[0]',data);
+      console.log('data.data[0]', data);
       const title = data.data[0].name
       const library_id = data.data[0].id
       return { title, library_id }
@@ -210,11 +244,10 @@ export class DifyService {
     }
   }
   // 获取机器人信息(获取机器人id)
-  async fetchBotInfo() {
+  async fetchBotInfo(bot_id: string) {
     try {
       // You should use await with fetch to handle the promise properly
-      const bot_Key = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00'
-      const response = await fetch(`https://dify.cyte.site:2097/console/api/apps/${bot_Key}`, {
+      const response = await fetch(`${this.DIFY_URL}/console/api/apps/${bot_id}`, {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
@@ -229,7 +262,7 @@ export class DifyService {
           "sec-fetch-dest": "empty",
           "sec-fetch-mode": "cors",
           "sec-fetch-site": "same-origin",
-          "Referer": `https://dify.cyte.site:2097/app/${bot_Key}/configuration`,
+          "Referer": `${this.DIFY_URL}/app/${bot_id}/configuration`,
           "Referrer-Policy": "strict-origin-when-cross-origin"
         },
         method: "GET"
@@ -251,9 +284,9 @@ export class DifyService {
   }
   // 更改机器人使用的知识库
   async changeSourceLibrary(bot_Id: string, switchLibraryId: string) {
-    const url = `https://dify.cyte.site:2097/console/api/apps/${bot_Id}/model-config`;
-    console.log('url',url);
-    
+    const url = `${this.DIFY_URL}/console/api/apps/${bot_Id}/model-config`;
+    console.log('url', url);
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -321,6 +354,24 @@ export class DifyService {
       console.error('There was an error!', error);
     }
   }
+
+  async newConversation() {
+    const url = 'https://dify.cyte.site/api/site'
+    const difyUserToken = this.difyUserToken
+    const header = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${difyUserToken}`
+    };
+    const options = {
+      method: 'GET',
+      headers: header,
+    };
+    const response = await fetch(url, options);
+    const data = await response.json();
+    return data;
+  }
+
+
 
 
 }

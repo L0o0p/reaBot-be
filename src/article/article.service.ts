@@ -6,6 +6,7 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  Req,
 } from '@nestjs/common';
 import { DataSource, getRepository, Repository } from 'typeorm';
 import { Article } from './entities/article.entity';
@@ -21,6 +22,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from 'src/answer-sheet/entities/questions.entity';
 import { Answer } from 'src/answer-sheet/entities/answers.entity';
+import { UsersService } from 'src/users/users.service';
 interface MammothMessage {
   type: string; // 'error' | 'warning' 等
   message: string;
@@ -42,6 +44,7 @@ export class ArticleService {
   constructor(
     private dataSource: DataSource,
     private chatService: DifyService,
+    private userService: UsersService,
     private configService: ConfigService
   ) {
     // get Article table repository to interact with the database
@@ -179,10 +182,10 @@ export class ArticleService {
 
   // 获取dify知识库
   async fetchDifyLibrary() {
-    const url = 'https://dify.cyte.site:2097/v1/datasets?page=1&limit=20';
+    const url = `${this.DIFY_URL}/v1/datasets?page=1&limit=20`;
     // curl --location --request GET 'http://dify.cyte.site/v1/datasets/{dataset_id}/documents' \
     // --header 'Authorization: Bearer {api_key}'
-    const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg'//知识库的key
+    const apiKey = this.difyDatabaseKey//知识库的key
     try {
       // 使用 fetch 发送 GET 请求
       const response = await fetch(url, {
@@ -209,8 +212,8 @@ export class ArticleService {
     }
   }
   // 获取dify知识库文档列表
-  async fetchDifyLibraryFiles() {
-    const library_id = (await this.chatService.fetchBotInfo()).model_config.dataset_configs.datasets.datasets[0].dataset.id
+  async fetchDifyLibraryFiles(bot_id:string) {
+    const library_id = (await this.chatService.fetchBotInfo(bot_id)).model_config.dataset_configs.datasets.datasets[0].dataset.id
     // const dataset_id = '312d5b8b-53d2-4ae9-8648-caab17550427'//<英文短文> 知识库的id
     const url = `${this.DIFY_URL}/v1/datasets/${library_id}/documents`
     const apiKey = this.difyDatabaseKey//知识库的key
@@ -241,8 +244,9 @@ export class ArticleService {
     }
   }
   // 从dify知识库文档列表获取(名字 -> 本地搜索获取)文档文本{name,content}
-  async getPropertyArticle() {
-    const articleName = await this.fetchDifyLibraryFiles()
+  async getPropertyArticle( userId:number ) {
+    const botId = (await this.userService.getBotIdByUserId(userId)).bot_id;
+    const articleName = await this.fetchDifyLibraryFiles(botId)
     console.log( 'articleNameX', articleName);
     
     const article_name = articleName.split('.')[0];
@@ -305,7 +309,7 @@ export class ArticleService {
   };
   // async deletDifyLibrary(dataset_id: string) {
   //   const url = `http://dify.cyte.site/v1/datasets/${dataset_id}`
-  //   const apiKey = 'dataset-9yaDOWXcbI2IkEP7OXobMTLg';
+  //   const apiKey = this.difyDatabaseKey ;
   //   const options = {
   //     method: 'DELET',
   //     headers: {

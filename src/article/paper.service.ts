@@ -116,9 +116,11 @@ export class PaperService {
         }
     }
 
-    async getCurrentPaper() {
+    async getCurrentPaper(userId:number) {
         // 1. 先根据使用的知识库获取当前文章信息
-        const currentArticleInfo = await this.articleService.getPropertyArticle();
+        const currentArticleInfo = await this.articleService.getPropertyArticle(userId);
+        console.log('currentArticleInfo',currentArticleInfo);
+        
         const currentArticleId = currentArticleInfo.id
         // 2. 根据当前文章来获取其绑定的paper
         const currentPaper = (await this.paperRepository.findOne({
@@ -128,7 +130,7 @@ export class PaperService {
             ]
         }))
         console.log('newPaper', currentPaper);
-        const paperId = currentPaper.id
+        const paperId = currentPaper.id  
         const articleA = (await this.articleRepository.find({ where: { id: currentPaper.articleAId } }))[0]
         const articleB = (await this.articleRepository.find({ where: { id: currentPaper.articleBId } }))[0]
         // 3. 返回paper信息和当前文章信息
