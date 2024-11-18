@@ -12,10 +12,10 @@ import { DataSource, getRepository, Repository } from 'typeorm';
 import { Article } from './entities/article.entity';
 import { CreateArticle } from './article.dto';
 import { response } from 'express';
-import { log } from 'console';
+// import { log } from 'console';
 import { DifyService } from 'src/chat/dify.service';
 import axios from 'axios';
-import * as fs from 'fs';
+// import * as fs from 'fs';
 import * as mammoth from 'mammoth';
 import { DocFile } from './entities/docFile.entity';
 import { ConfigService } from '@nestjs/config';
@@ -345,7 +345,7 @@ export class ArticleService {
             { id: 'remove_urls_emails', enabled: true }
           ],
           segmentation: {
-            separator: '###',
+            separator: '\n',
             max_tokens: 500
           }
         },

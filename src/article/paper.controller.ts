@@ -123,16 +123,14 @@ export class PaperController {
     async getCurrentPaperAndArticle(
     @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
     ) {
-        console.log('req.user.user.userId',req.user.user.userId);
-        return this.paperService.getCurrentPaper(req.user.user.userId)
+        console.log('req.user.userId',req.user.userId);
+        return this.paperService.getCurrentPaper(req.user.userId)
     }
 
     //修改机器人使用的知识库(使用标题)
@@ -141,16 +139,14 @@ export class PaperController {
     async changeSourceLibraryByTittle(
         @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
     ) {
         // 知道现在的article ⬇️
-        const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.user.userId)).id
+        const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.userId)).id
         // 知道现在的paper ⬇️
         const currentPaper_id = ((await this.paperRepository.findOne({
             where: [
@@ -162,7 +158,7 @@ export class PaperController {
         //👉 插入一个计算当前paper总分的函数并且把他录入对应答题卡
         const currentPaperScore = await this.paperService.getPaperScore(
             currentPaper_id,
-            req.user.user.userId
+            req.user.userId
         )
 
         // 推算出下一个paper的id ⬇️
@@ -205,7 +201,7 @@ export class PaperController {
         };
         // return newPaper
         // 切换到articleA_title对应的知识库
-        const botId = (await this.userService.getBotIdByUserId(req.user.user.userId)).bot_id;
+        const botId = (await this.userService.getBotIdByUserId(req.user.userId)).bot_id;
 
         const nextLibraryId = (await this.articleRepository.find({ where: { id: articleAId } }))[0].library_id
         console.log('nextLibraryId:', nextLibraryId);
@@ -213,7 +209,7 @@ export class PaperController {
         const result = await this.chatService.changeSourceLibrary(botId, nextLibraryId);
 
         // 再次获取知识库，看看现在用的是什么知识库（library_id,articleTitle,paperId)
-        const newLibraryId = await this.chatService.fetchBotLibraryId(req.user.user.userId)
+        const newLibraryId = await this.chatService.fetchBotLibraryId(req.user.userId)
         const newPaperId = (await this.paperRepository.findOne({
             where: [
                 { articleAId: articleAId },
@@ -240,16 +236,14 @@ export class PaperController {
     async getPaperScore(
         @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
     ) {
         // 知道现在的article ⬇️
-        const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.user.userId)).id
+        const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.userId)).id
         console.log('currentArticle_id',currentArticle_id);
         
         // 知道现在的paper ⬇️
@@ -263,7 +257,7 @@ export class PaperController {
         //👉 插入一个计算当前paper总分的函数并且把他录入对应答题卡
         const currentPaperScore = await this.paperService.getPaperScore(
             currentPaper_id,
-            req.user.user.userId
+            req.user.userId
         )
         return currentPaperScore
     }

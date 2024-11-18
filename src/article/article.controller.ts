@@ -43,7 +43,10 @@ export class ArticleController {
     // const id = '2cf5d66d-a3fe-481e-9619-3b0a4d688e94' // 测试createLibraryByDoc使用知识库
     const result = await this.appService.createLibraryByDoc(file, id)
     // 2. 读取doc内的文本内容到数据库
-    const rawTextData = await mammoth.extractRawText({ buffer: Buffer.from(file.buffer) });
+    const buf = { buffer: Buffer.from(file.buffer) }
+    const rawTextData = await mammoth.extractRawText(buf);
+    const htmlData = await mammoth.convertToHtml(buf);
+    console.log(htmlData)
     const rawText = rawTextData.value;
     console.log('rawText', rawText);
     function getTextAfterFirstNewline(text) {
@@ -56,7 +59,8 @@ export class ArticleController {
     const processedText = getTextAfterFirstNewline(rawText);
     // 3. 储存到本地
     const tag = "article"
-    this.appService.save_articleFile(file, id, tag, processedText);
+    // processedText,
+    this.appService.save_articleFile(file, id, tag, htmlData.value);
 
     const finishText = 'Article have been saved'
     console.log(finishText);
@@ -70,11 +74,9 @@ export class ArticleController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
   ) {
@@ -96,7 +98,7 @@ export class ArticleController {
     console.log('savableData', savableData);
     // 4. 存储doc内的文本内容到数据库
     // 获取这个文件的名字=>title=>article_id&questions_id来判断存在哪里
-    const articleId = (await this.appService.getPropertyArticle(req.user.user.userId)).id
+    const articleId = (await this.appService.getPropertyArticle(req.user.userId)).id
     console.log('articleIdX', articleId);
 
     savableData.forEach(async (item: any, index: number) => {
@@ -117,11 +119,9 @@ export class ArticleController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
   ) {
@@ -142,7 +142,7 @@ export class ArticleController {
     // Splitting the text into chunks based on double newlines
     const chunks = rawText.split('\n\n\n'); // 分开每个「问题块」
     console.log('Chunks:', chunks);
-    const articleId = (await this.appService.getPropertyArticle(req.user.user.userId)).id
+    const articleId = (await this.appService.getPropertyArticle(req.user.userId)).id
 
     for (const chunk of chunks) {// 对于每个「问题块」：
       const lines = chunk.split('\n').filter(line => line.trim() !== '');
@@ -211,15 +211,13 @@ export class ArticleController {
   async getDifyLibraryFiles(
     @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
   ) {
-    const botId = (await this.userService.getBotIdByUserId(req.user.user.userId)).bot_id;
+    const botId = (await this.userService.getBotIdByUserId(req.user.userId)).bot_id;
     return this.appService.fetchDifyLibraryFiles(botId);
   }
 
@@ -228,15 +226,13 @@ export class ArticleController {
   async getPropertyArticle(
     @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
   ) {
-    return this.appService.getPropertyArticle(req.user.user.userId);
+    return this.appService.getPropertyArticle(req.user.userId);
   }
 
   // 根据 ID 获取本地存储的文章
@@ -299,19 +295,17 @@ export class ArticleController {
   async getDocText(
     @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
   ) {
     console.log('proX');
-    console.log('req.user.user.usrId',req.user.user.userId);
-    const library_id = await this.chatService.fetchBotLibraryId(req.user.user.userId);
+    console.log('req.user.usrId',req.user.userId);
+    const library_id = await this.chatService.fetchBotLibraryId(req.user.userId);
     console.log('library_id', library_id);
-    const title = (await this.chatService.getArticleName(library_id,req.user.user.userId)).title + '.docx'
+    const title = (await this.chatService.getArticleName(library_id,req.user.userId)).title + '.docx'
     console.log('titleX:', title);
     const tag = 'questions'
     const articleQuestions: string[] = await this.appService.getDocumentByNameAndTag(title, tag)
@@ -322,17 +316,15 @@ export class ArticleController {
   async getQuestions(
     @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
   ) {
-    console.log('req.user.user.userId',req.user.user.userId);
-    const library_id = await this.chatService.fetchBotLibraryId(req.user.user.userId)
-    const title = (await this.chatService.getArticleName(library_id,req.user.user.userId)).title
+    console.log('req.user.userId',req.user);
+    const library_id = await this.chatService.fetchBotLibraryId(req.user.userId)
+    const title = (await this.chatService.getArticleName(library_id,req.user.userId)).title
     const article_id = (await this.getUserById(title)).id
     console.log('article_id', article_id);
 
@@ -344,21 +336,19 @@ export class ArticleController {
   async getProcceed(
     @Req() req: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
     }
   ) {
-    const currentArticle = (await this.appService.getPropertyArticle(req.user.user.userId))
+    const currentArticle = (await this.appService.getPropertyArticle(req.user.userId))
     const article_id = currentArticle.id
     const index = (await this.appService.getLatestAnswerRank(article_id)).rank
     console.log(`当前做到${currentArticle.id}. ${currentArticle.title}的第${index}题`);
     return index
     const currentAnswers = await this.appService.getAnswersByArticleId(article_id)
-    const currentPaper = await this.paperService.getCurrentPaper(req.user.user.userId)
+    const currentPaper = await this.paperService.getCurrentPaper(req.user.userId)
     const currentProgress = {
       paper: currentPaper,
       article:currentArticle,

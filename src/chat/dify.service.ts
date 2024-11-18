@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Dify } from './dify.entity';
@@ -37,6 +38,7 @@ export class DifyService {
 
   async getBotIdByUserId(userId: number): Promise<string | null> {
     console.log('userId', userId);
+    if (!userId) throw new UnauthorizedException()
     const user = await this.userRepository.findOne({ where: { id: userId } });
     console.log('user_found', user);
     if (user) {
@@ -47,6 +49,7 @@ export class DifyService {
 
   async getBotKeyByUserId(userId: number): Promise<string | null> {
     console.log('userId', userId);
+    if (!userId) throw new UnauthorizedException()
     const user = await this.userRepository.findOne({ where: { id: userId } });
     console.log('user_found', user);
     if (user) {
@@ -55,7 +58,7 @@ export class DifyService {
     return null;
   }
   // 发送对话消息
-  async sendInfo(info: information, user) {
+  async sendInfo(info: information, user, skip_cid?: boolean) {
     // userId -> User
     console.log('informationX', info);
     console.log('user:', user);
@@ -76,7 +79,8 @@ export class DifyService {
       inputs: {},
       query: info.information,  // 确保这里是正确的信息字段
       response_mode: "blocking",
-      conversation_id: cid,
+      // auto_generate_name: false,
+      conversation_id: skip_cid ? '' : cid,
       user: userID,
     };
     console.log(JSON.stringify(body, null, 2));
@@ -321,7 +325,7 @@ export class DifyService {
           retriever_resource: { enabled: true },
           sensitive_word_avoidance: { enabled: false, type: "", configs: [] },
           agent_mode: { enabled: false, max_iteration: 5, strategy: "function_call", tools: [] },
-          model: { provider: "openai", name: "gpt-4o-mini", mode: "chat", completion_params: { stop: [] } },
+          model: { provider: "moonshot", name: "moonshot-v1-32k", mode: "chat", completion_params: { stop: [] } },
           dataset_configs: {
             retrieval_model: "multiple",
             top_k: 4,
