@@ -121,7 +121,7 @@ export class DifyService {
   //给获取当前用户的聊天历史记录
   async getChatlog(user) {
     // userId -> User
-    console.log('id', user.userId);
+    console.log('id', user);
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
     console.log('user_found', user_found);
     const userID = `readbotuser-${user.userId}`

@@ -213,10 +213,14 @@ export class ArticleService {
   }
   // 获取dify知识库文档列表
   async fetchDifyLibraryFiles(bot_id:string) {
-    const library_id = (await this.chatService.fetchBotInfo(bot_id)).model_config.dataset_configs.datasets.datasets[0].dataset.id
-    // const dataset_id = '312d5b8b-53d2-4ae9-8648-caab17550427'//<英文短文> 知识库的id
-    const url = `${this.DIFY_URL}/v1/datasets/${library_id}/documents`
+    const datasets = (await this.chatService.fetchBotInfo(bot_id)).model_config.dataset_configs.datasets.datasets
+    const dataset_id = datasets[0].dataset.id//<英文短文> 知识库的id
+    const url = `${this.DIFY_URL}/v1/datasets/${dataset_id}/documents`
     const apiKey = this.difyDatabaseKey//知识库的key
+    console.log('dataset_id',dataset_id);
+    console.log('url',url);
+    console.log('apiKey',apiKey);
+    
     try {
       // 使用 fetch 发送 GET 请求
       const response = await fetch(url, {
@@ -246,6 +250,7 @@ export class ArticleService {
   // 从dify知识库文档列表获取(名字 -> 本地搜索获取)文档文本{name,content}
   async getPropertyArticle( userId:number ) {
     const botId = (await this.userService.getBotIdByUserId(userId)).bot_id;
+    console.log( 'botIdX', botId);
     const articleName = await this.fetchDifyLibraryFiles(botId)
     console.log( 'articleNameX', articleName);
     

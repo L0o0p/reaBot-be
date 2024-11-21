@@ -176,8 +176,10 @@ export class DifyController {
           username: string;
         }
       }
-    }) {
-    return this.appService.getChatlog(req.user.user);
+  }) {
+    console.log('user',req.user);
+    
+    return this.appService.getChatlog(req.user);
   }
 
   // 创建新的coversation
