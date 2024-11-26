@@ -23,6 +23,7 @@ import { Answer } from 'src/answer-sheet/entities/answers.entity';
 import { AnswerSheet } from 'src/answer-sheet/entities/answer-sheet.entity';
 import { Question } from 'src/answer-sheet/entities/questions.entity';
 import { AnswerSheetService } from 'src/answer-sheet/answer-sheet.service';
+import { UsersService } from 'src/users/users.service';
 interface MammothMessage {
     type: string; // 'error' | 'warning' 等
     message: string;
@@ -44,6 +45,8 @@ export class PaperService {
         private dataSource: DataSource,
         private articleService: ArticleService,
         private answerSheetService: AnswerSheetService,
+        private chatSheetService: DifyService,
+        private userService: UsersService,
     ) {
         this.paperRepository = this.dataSource.getRepository(Paper);
         this.articleRepository = this.dataSource.getRepository(Article);
@@ -116,11 +119,82 @@ export class PaperService {
         }
     }
 
-    async getCurrentPaper(userId:number) {
+    async getProgress(userId: number) {
+        console.log('getProgress');
+        // 根据该user最新的answer获取qustions
+        console.log('userId',userId);
+        const lastAnswerSheetId = (await this.answerSheetRepository.findOne({
+            where: { user: { id: userId } },
+            order: { createdAt: 'DESC' },
+            // select: ['id']
+        })).id
+        console.log('lastAnswerSheetId',lastAnswerSheetId);
+        if (!lastAnswerSheetId) { console.log('没有答案表'); return null; }
+        const lastAnswer = (await this.answersRepository.find({
+            where: {
+                answerSheet: { id: lastAnswerSheetId }
+            },
+            relations: {
+                question: true  // 明确加载question关联
+            },
+            order: {
+                updatedAt: 'DESC'
+            },
+            take: 1
+        }))[0]
+        
+        if  (!lastAnswer || Object.keys(lastAnswer).length === 0) { console.log('答案表上还没有填入任何答案，answer表没有数据'); return null; }
+        const lastQuestion = lastAnswer.question 
+        // 根据question获取article
+        const lastArticle = await this.articleRepository.findOne({
+            where: {
+                id: lastQuestion.articleId
+            }
+        })
+        // ====================计算这出这是这篇文章的第几题========================================
+        const currentQuestionNum = await this.questionsRepository
+            .createQueryBuilder('question')
+        .where('question.articleId = :articleId', { articleId: lastArticle.id })
+            .andWhere('question.id <= :questionId', { questionId: lastQuestion.id })
+            .getCount();
+        // ================================================================================
+        const title = lastArticle.title
+        // 然后查询
+        const paper = await this.paperRepository.findOne({
+            where: [
+                { articleA: { title } },
+                { articleB: { title } }
+            ],
+            relations: {
+                articleA: true,
+                articleB: true
+            }
+        });
+
+        let currentArticleKey = '';
+        if (paper) {
+            if (paper.articleA?.title === title) {
+                currentArticleKey =  'A';
+            } else if (paper.articleB?.title === title) {
+                currentArticleKey =  'B';
+            }
+        }
+        return {currentArticleKey,currentQuestionNum}
+
+        // 根据article 切换library
+        // const libraryId = lastArticle.library_id
+        // const botId = (await this.userService.getBotIdByUserId(userId)).bot_id;
+        // const changeLibrary = await this.chatSheetService.changeSourceLibrary(botId,libraryId);
+        // return  libraryId 
+        // return botId
+        // return changeLibrary
+    }
+
+    async getCurrentPaper(userId: number) {
         // 1. 先根据使用的知识库获取当前文章信息
         const currentArticleInfo = await this.articleService.getPropertyArticle(userId);
-        console.log('currentArticleInfo',currentArticleInfo);
-        
+        console.log('currentArticleInfo', currentArticleInfo);
+
         const currentArticleId = currentArticleInfo.id
         // 2. 根据当前文章来获取其绑定的paper
         const currentPaper = (await this.paperRepository.findOne({
@@ -130,7 +204,7 @@ export class PaperService {
             ]
         }))
         console.log('newPaper', currentPaper);
-        const paperId = currentPaper.id  
+        const paperId = currentPaper.id
         const articleA = (await this.articleRepository.find({ where: { id: currentPaper.articleAId } }))[0]
         const articleB = (await this.articleRepository.find({ where: { id: currentPaper.articleBId } }))[0]
         // 3. 返回paper信息和当前文章信息

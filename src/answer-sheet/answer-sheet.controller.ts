@@ -52,6 +52,16 @@ export class AnswerSheetController {
     const answerList: number[] = [2, 1, 2, 0, 3] // 从数据表拉取正确答案（传入「题号」questionIndex、「当前文章id」ariticle_id)
     const questionIndex: number = body.questionIndex
     const correctAnswer: number = answerList[questionIndex];
+    const getCorrectAnswerLetter = (num:number): string => {
+    switch(num) {
+        case 0: return 'A';
+        case 1: return 'B';
+        case 2: return 'C';
+        case 3: return 'D';
+        default: return 'A';
+    }
+    }
+    const CorrectAnswerLetter = getCorrectAnswerLetter(correctAnswer);
     console.log('correctAnswer', correctAnswer);
     // 录入用户答案及其正答情况
 
@@ -76,7 +86,7 @@ export class AnswerSheetController {
       options: ["A. 香蕉 1", "B. 苹果 2", "C. 雪梨 3", "D. 菠萝 4"]
 
     };
-    return { correctAnswer, correct: isCorrect, additionalExercises}
+    return { CorrectAnswerLetter, correct: isCorrect, additionalExercises}
   }
 
   @Post('analyze')
@@ -106,7 +116,7 @@ export class AnswerSheetController {
     // console.log( 'additionalExercises', additionalExercises);
 
     const questionString = question.question + question.options.join()
-    const info = { information: `对于这道题${questionString}，请根据文章内容给我答案解析，帮助我理解和进步` }
+    const info = { information: `对于这道题${questionString}，请根据文章内容给我150字以内的答案解析，帮助我理解和进步` }
     console.log('req.user', req.user);
 
     const answerAnalysis = await this.chatService.sendInfo(info, req.user, true) || {

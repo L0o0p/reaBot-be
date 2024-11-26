@@ -30,9 +30,9 @@ export class DifyController {
     const botId = await this.appService.getBotIdByUserId(req.user.userId)
     return {
       botId: botId,
-      user:req.user
-      }
+      user: req.user
     }
+  }
   // 发送聊天消息
   @Post('/send')
   async sendInformation(
@@ -46,10 +46,10 @@ export class DifyController {
     }
   ) {
     // console.log("reqds",req.user.user);
-    console.log('req.user.user',req.user.userId);
-    
+    console.log('req.user.user', req.user.userId);
     return await this.appService.sendInfo(info, req.user);
   }
+  
   // 发送聊天消息（使用questions的tips提问）
   @Post('/gettips')
   async sendPromptInformation(
@@ -62,9 +62,9 @@ export class DifyController {
       }
     }
   ) {
-    const library_id = await this.appService.fetchBotLibraryId( req.user)
-    const title = (await this.appService.getArticleName(library_id,req.user.userId)).title+'.docx'
-    console.log('title',title);
+    const library_id = await this.appService.fetchBotLibraryId(req.user)
+    const title = (await this.appService.getArticleName(library_id, req.user.userId)).title + '.docx'
+    console.log('title', title);
     // info = "question"+"tips"
     const articleQuestions: string[] = await this.articleService.getDocumentByNameAndTag(title, 'questions')
     const questions = articleQuestions[info.questionIndex]
@@ -85,7 +85,7 @@ export class DifyController {
   ) {
     const library_id = await this.appService.fetchBotLibraryId(req.user)
     console.log('library_id', library_id);
-    return this.appService.getArticleName(library_id,req.user.userId)
+    return this.appService.getArticleName(library_id, req.user.userId)
     //预期返回：{"title":"节日快乐","library_id":"15e4c247-aa06-41c9-b4a2-25e49e977af5"}
   }
   // 获取机器人信息
@@ -99,9 +99,9 @@ export class DifyController {
       }
     }
   ) {
-    console.log('req.user.userId',req.user.userId);
+    console.log('req.user.userId', req.user.userId);
     const bot_id = await this.appService.getBotIdByUserId(req.user.userId)
-    console.log('bot_id',bot_id);
+    console.log('bot_id', bot_id);
     const bot_info = await this.appService.fetchBotInfo(bot_id)
     //知识库id
     const libraryId = bot_info.model_config.dataset_configs.datasets.datasets[0].dataset.id
@@ -128,7 +128,7 @@ export class DifyController {
   //   // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
   //   // 销毁conversation_id以便他能根据新的知识库创建一个新的对话
   //   await this.userService.destroyConversationId(req.user.userId);
-    
+
   //   try {
   //     const result = await this.appService.changeSourceLibrary(botId, libraryId);
   //     return result;
@@ -154,9 +154,9 @@ export class DifyController {
     const botId = (await this.userService.getBotIdByUserId(req.user.userId)).bot_id;
     // 销毁conversation_id以便他能根据新的知识库创建一个新的对话
     await this.userService.destroyConversationId(req.user.userId);
-    console.log('libraryId',libraryId);
-    console.log('botId',botId);
-    
+    console.log('libraryId', libraryId);
+    console.log('botId', botId);
+
     // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
     try {
       const result = await this.appService.changeSourceLibrary(botId, libraryId);
@@ -169,16 +169,16 @@ export class DifyController {
   // 获取聊天记录
   @Get('/chatlog')
   async getChatlog(@Req() req: {
+    user: {
       user: {
-        user: {
-          id: number;
-          userId: number;
-          username: string;
-        }
+        id: number;
+        userId: number;
+        username: string;
       }
+    }
   }) {
-    console.log('user',req.user);
-    
+    console.log('user', req.user);
+
     return this.appService.getChatlog(req.user);
   }
 
@@ -187,5 +187,15 @@ export class DifyController {
   async newConversation() {
     return await this.appService.newConversation();
   }
-  
+
+  // 检查用户答题进度
+  @Get('check_progress')
+  async checkProgress() {
+    // 找找最近创建的答题anwser
+    // 最近的quetions
+    // 最近的article
+    // 切换到最近的知识库
+    return
+  }
+
 }

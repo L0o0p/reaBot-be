@@ -119,6 +119,25 @@ export class PaperController {
         return newPaper
     }
 
+    @Get('testt')
+    async testt(
+    @Req() req: {
+      user: {
+        id: number;
+        userId: number;
+        username: string;
+      }
+    }
+    ) {
+        console.log('req.user.userId',req.user.userId);
+        const lastArticle = await this.paperService.getProgress(req.user.userId)
+        const currentArticleKey = lastArticle.currentArticleKey
+        const currentQuestionNum = lastArticle.currentQuestionNum
+        const progress = {currentArticleKey, currentQuestionNum}
+        // return lastArticle
+        return  progress ;
+    }
+
     @Get('currentPaper')
     async getCurrentPaperAndArticle(
     @Req() req: {
@@ -130,7 +149,13 @@ export class PaperController {
     }
     ) {
         console.log('req.user.userId',req.user.userId);
-        return this.paperService.getCurrentPaper(req.user.userId)
+        const lastArticle = await this.paperService.getProgress(req.user.userId)
+        const currentArticleKey = lastArticle.currentArticleKey
+        const currentQuestionNum = lastArticle.currentQuestionNum
+        const progress = {currentArticleKey, currentQuestionNum}
+        // return lastArticle
+        const currentPaper = await this.paperService.getCurrentPaper(req.user.userId)
+        return { currentPaper, progress };
     }
 
     //修改机器人使用的知识库(使用标题)

@@ -347,13 +347,5 @@ export class ArticleController {
     const index = (await this.appService.getLatestAnswerRank(article_id)).rank
     console.log(`当前做到${currentArticle.id}. ${currentArticle.title}的第${index}题`);
     return index
-    const currentAnswers = await this.appService.getAnswersByArticleId(article_id)
-    const currentPaper = await this.paperService.getCurrentPaper(req.user.userId)
-    const currentProgress = {
-      paper: currentPaper,
-      article:currentArticle,
-      answer: currentAnswers,
-    }
-    return currentProgress;
   }
 }

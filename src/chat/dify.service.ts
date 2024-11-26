@@ -133,7 +133,9 @@ export class DifyService {
     
       const url = `${this.DIFY_URL}/v1/messages?user=${username}&conversation_id=${conversationId}&limit=100&first_id=`;
       const apiKey = await this.getBotKeyByUserId(user.userId); // Replace 'YOUR_API_KEY' with your actual API key
-      return this.fetchData(url, apiKey)
+    console.log('apiKey',apiKey);
+      
+    return this.fetchData(url, apiKey)
   }
   //给获取当前用户的聊天历史记录-执行方法
   async fetchData(url:string, apiKey:string) {
@@ -208,8 +210,12 @@ export class DifyService {
   // 通过知识库id获取文章title
   async getArticleName(id: string, userId: number) {
     try {
+      console.log('getArticleName');
+      console.log('id',id, 'userId', userId);
       // You should use await with fetch to handle the promise properly
       const botId = await this.getBotIdByUserId(userId)
+      console.log('botId',botId);
+      
       const response = await fetch(`${this.DIFY_URL}/console/api/datasets?page=1&ids=${id}`, {
         headers: {
           "accept": "*/*",
