@@ -148,14 +148,44 @@ export class PaperController {
       }
     }
     ) {
-        console.log('req.user.userId',req.user.userId);
-        const lastArticle = await this.paperService.getProgress(req.user.userId)
-        const currentArticleKey = lastArticle.currentArticleKey
-        const currentQuestionNum = lastArticle.currentQuestionNum
-        const progress = {currentArticleKey, currentQuestionNum}
-        // return lastArticle
-        const currentPaper = await this.paperService.getCurrentPaper(req.user.userId)
-        return { currentPaper, progress };
+    const userId = req.user.userId;
+    console.log('req.user.userId', userId);
+
+    const lastArticle = await this.paperService.getProgress(userId);
+
+    // 初始化默认的进度
+    let progress = {
+      currentArticleKey: null,
+      currentQuestionNum: null
+    };
+
+    // 检查 lastArticle 是否存在并且有有效的属性
+    if (lastArticle && lastArticle.currentArticleKey !== undefined && lastArticle.currentQuestionNum !== undefined) {
+      progress = {
+        currentArticleKey: lastArticle.currentArticleKey,
+        currentQuestionNum: lastArticle.currentQuestionNum
+      };
+    }
+    console.log('lastArticle',lastArticle);
+    
+    const currentPaper = await this.paperService.getCurrentPaper(userId);
+    return { currentPaper, progress };
+    }
+
+
+    @Get('timeCalculation')
+    async timeCalculation(
+        @Req() req: {
+            user: {
+                id: number;
+                userId: number;
+                username: string;
+            }
+        }
+    ) {
+        return await this.paperService.estimateTime(req.user.userId);
+        // 最近提交的答案
+        // 上一个文章的最后一个答案的提交
     }
 
     //修改机器人使用的知识库(使用标题)

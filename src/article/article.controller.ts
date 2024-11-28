@@ -302,10 +302,10 @@ export class ArticleController {
     }
   ) {
     console.log('proX');
-    console.log('req.user.usrId',req.user.userId);
+    console.log('req.user.usrId', req.user.userId);
     const library_id = await this.chatService.fetchBotLibraryId(req.user.userId);
     console.log('library_id', library_id);
-    const title = (await this.chatService.getArticleName(library_id,req.user.userId)).title + '.docx'
+    const title = (await this.chatService.getArticleName(library_id, req.user.userId)).title + '.docx'
     console.log('titleX:', title);
     const tag = 'questions'
     const articleQuestions: string[] = await this.appService.getDocumentByNameAndTag(title, tag)
@@ -322,9 +322,9 @@ export class ArticleController {
       }
     }
   ) {
-    console.log('req.user.userId',req.user);
+    console.log('req.user.userId', req.user);
     const library_id = await this.chatService.fetchBotLibraryId(req.user.userId)
-    const title = (await this.chatService.getArticleName(library_id,req.user.userId)).title
+    const title = (await this.chatService.getArticleName(library_id, req.user.userId)).title
     const article_id = (await this.getUserById(title)).id
     console.log('article_id', article_id);
 
@@ -342,10 +342,24 @@ export class ArticleController {
       }
     }
   ) {
+    // 获取当前文章
     const currentArticle = (await this.appService.getPropertyArticle(req.user.userId))
     const article_id = currentArticle.id
+    // 获取当前题号
     const index = (await this.appService.getLatestAnswerRank(article_id)).rank
     console.log(`当前做到${currentArticle.id}. ${currentArticle.title}的第${index}题`);
     return index
+  }
+
+  @Get('get/timeCaculation')
+  async getTimeCaculation(
+    @Req() req: {
+      user: {
+        id: number;
+        userId: number;
+        username: string;
+      }
+    }
+  ) {
   }
 }

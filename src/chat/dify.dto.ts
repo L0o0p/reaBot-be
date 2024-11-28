@@ -1,5 +1,6 @@
 export interface information {
-  information:string
+  information: string
+  ifUseConversation_id?: boolean
 }
 
 export interface askForTips {

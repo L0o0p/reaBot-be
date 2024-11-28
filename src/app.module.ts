@@ -30,6 +30,7 @@ import { Database } from './database/typeorm.module';
 import { DataSource } from 'typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
+import { HttpModule } from '@nestjs/axios';
 @Module({
   imports: [
 ConfigModule.forRoot({
@@ -47,7 +48,8 @@ ConfigModule.forRoot({
       SupplementalQuestion,
       Answer,
     ]),
-      AuthModule
+    AuthModule,
+      HttpModule
     
   ],
   controllers: [

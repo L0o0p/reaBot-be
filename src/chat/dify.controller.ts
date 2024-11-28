@@ -17,6 +17,19 @@ export class DifyController {
     // const current_database_id = this.appService.getCurrentDatabaseId();
   }
 
+  @Get('ttt')
+  async getCurrentToken(@Req() req: {
+    user: {
+      id: number;
+      userId: number;
+      username: string;
+    }
+  }) {
+    console.log('req.user.idX', req.user.id);
+    
+    return await this.appService.fetchBotLibraryId(req.user.id);
+  }
+  
   @Get('test')
   async test(
     @Req() req: {
@@ -47,7 +60,7 @@ export class DifyController {
   ) {
     // console.log("reqds",req.user.user);
     console.log('req.user.user', req.user.userId);
-    return await this.appService.sendInfo(info, req.user);
+    return await this.appService.sendInfo(info.information, req.user, info.ifUseConversation_id);
   }
   
   // 发送聊天消息（使用questions的tips提问）
@@ -68,7 +81,7 @@ export class DifyController {
     // info = "question"+"tips"
     const articleQuestions: string[] = await this.articleService.getDocumentByNameAndTag(title, 'questions')
     const questions = articleQuestions[info.questionIndex]
-    const mixInfo = { information: "对于这篇文章，有以下这道阅读理解题，请问" + info.tip + ":" + questions }
+    const mixInfo =  "对于这篇文章，有以下这道阅读理解题，请问" + info.tip + ":" + questions 
     console.log(mixInfo);
     return await this.appService.sendInfo(mixInfo, req.user);
   }

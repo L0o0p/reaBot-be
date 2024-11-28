@@ -119,16 +119,17 @@ export class PaperService {
         }
     }
 
-    async getProgress(userId: number) {
+    async estimateTime(userId:number): Promise<any> {
+        // 最近提交的答案
         console.log('getProgress');
         // 根据该user最新的answer获取qustions
-        console.log('userId',userId);
+        console.log('userId', userId);
         const lastAnswerSheetId = (await this.answerSheetRepository.findOne({
             where: { user: { id: userId } },
             order: { createdAt: 'DESC' },
             // select: ['id']
         })).id
-        console.log('lastAnswerSheetId',lastAnswerSheetId);
+        console.log('lastAnswerSheetId', lastAnswerSheetId);
         if (!lastAnswerSheetId) { console.log('没有答案表'); return null; }
         const lastAnswer = (await this.answersRepository.find({
             where: {
@@ -142,9 +143,44 @@ export class PaperService {
             },
             take: 1
         }))[0]
-        
-        if  (!lastAnswer || Object.keys(lastAnswer).length === 0) { console.log('答案表上还没有填入任何答案，answer表没有数据'); return null; }
-        const lastQuestion = lastAnswer.question 
+        // 上一个文章的最后一个答案的提交
+        // 上一个文章怎么知道 =》要知道当前的Paper & Article
+        // 当前文章：lastAnswer =》questionsId =》Article
+        // 当前Paper：》Article =》 Paper
+        // 上一篇文章：
+        // 如果现在是ArticleB，直接找上一篇文章
+        // 如果现在是ArticleA，找上一Paper的ArticleB
+        // 最终得到一个ArticleId=》questionsId=》answer.updatedat
+
+        return lastAnswer;
+    }
+
+    async getProgress(userId: number) {
+        console.log('getProgress');
+        // 根据该user最新的answer获取qustions
+        console.log('userId', userId);
+        const lastAnswerSheetId = (await this.answerSheetRepository.findOne({
+            where: { user: { id: userId } },
+            order: { createdAt: 'DESC' },
+            // select: ['id']
+        })).id
+        console.log('lastAnswerSheetId', lastAnswerSheetId);
+        if (!lastAnswerSheetId) { console.log('没有答案表'); return null; }
+        const lastAnswer = (await this.answersRepository.find({
+            where: {
+                answerSheet: { id: lastAnswerSheetId }
+            },
+            relations: {
+                question: true  // 明确加载question关联
+            },
+            order: {
+                updatedAt: 'DESC'
+            },
+            take: 1
+        }))[0]
+
+        if (!lastAnswer || Object.keys(lastAnswer).length === 0) { console.log('答案表上还没有填入任何答案，answer表没有数据'); return null; }
+        const lastQuestion = lastAnswer.question
         // 根据question获取article
         const lastArticle = await this.articleRepository.findOne({
             where: {
@@ -154,7 +190,7 @@ export class PaperService {
         // ====================计算这出这是这篇文章的第几题========================================
         const currentQuestionNum = await this.questionsRepository
             .createQueryBuilder('question')
-        .where('question.articleId = :articleId', { articleId: lastArticle.id })
+            .where('question.articleId = :articleId', { articleId: lastArticle.id })
             .andWhere('question.id <= :questionId', { questionId: lastQuestion.id })
             .getCount();
         // ================================================================================
@@ -174,12 +210,12 @@ export class PaperService {
         let currentArticleKey = '';
         if (paper) {
             if (paper.articleA?.title === title) {
-                currentArticleKey =  'A';
+                currentArticleKey = 'A';
             } else if (paper.articleB?.title === title) {
-                currentArticleKey =  'B';
+                currentArticleKey = 'B';
             }
         }
-        return {currentArticleKey,currentQuestionNum}
+        return { currentArticleKey, currentQuestionNum }
 
         // 根据article 切换library
         // const libraryId = lastArticle.library_id

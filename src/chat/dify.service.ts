@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -10,10 +11,10 @@ import { User } from 'src/users/entity/users.entity';
 import { information } from './dify.dto';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class DifyService {
-  private articleRepository;
   private userRepository: Repository<User>;
   public current_bot_config: {
     context_dbs: string[]
@@ -21,19 +22,15 @@ export class DifyService {
       context_dbs: []
     }
   private logger = new Logger('DifyService');
-  private difyDatabaseKey: string;
   private DIFY_URL: string;
-  private difyUserToken: string;
+  @Inject(AuthService) 
+  private readonly authService: AuthService
   constructor(
     private dataSource: DataSource,
     private configService: ConfigService
   ) {
-    this.articleRepository = this.dataSource.getRepository(Dify);
     this.userRepository = this.dataSource.getRepository(User);
-    this.difyUserToken = this.configService.get<string>('DIFY_USER_TOKEN');
     this.DIFY_URL = this.configService.get<string>('DIFY_URL');
-    this.difyDatabaseKey = this.configService.get<string>('DIFY_DATABASE_KEY');
-    // this.fetchBotInfo()
   }
 
   async getBotIdByUserId(userId: number): Promise<string | null> {
@@ -58,9 +55,9 @@ export class DifyService {
     return null;
   }
   // 发送对话消息
-  async sendInfo(info: information, user, skip_cid?: boolean) {
+  async sendInfo(information: string, user: { id?: number; userId: any; username?: string; }, skip_cid?: boolean) {
     // userId -> User
-    console.log('informationX', info);
+    console.log('informationX', information);
     console.log('user:', user);
 
     const user_found = await this.userRepository.findOne({ where: { id: user.userId } });
@@ -77,7 +74,7 @@ export class DifyService {
     let cid = user_found.conversation_id || '';
     const body = {
       inputs: {},
-      query: info.information,  // 确保这里是正确的信息字段
+      query: information,  // 确保这里是正确的信息字段
       response_mode: "blocking",
       // auto_generate_name: false,
       conversation_id: skip_cid ? '' : cid,
@@ -171,11 +168,12 @@ export class DifyService {
     try {
       // You should use await with fetch to handle the promise properly
       const botId = await this.getBotIdByUserId(user)
+      const difyUserToken = await this.authService.getCurrentToken()
       const response = await fetch(`${this.DIFY_URL}/console/api/apps/${botId}`, {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-          "authorization": `Bearer ${this.difyUserToken}`,
+          "authorization": `Bearer ${difyUserToken}`,
           "cache-control": "no-cache",
           "content-type": "application/json",
           "pragma": "no-cache",
@@ -215,12 +213,12 @@ export class DifyService {
       // You should use await with fetch to handle the promise properly
       const botId = await this.getBotIdByUserId(userId)
       console.log('botId',botId);
-      
+      const difyUserToken = await this.authService.getCurrentToken()
       const response = await fetch(`${this.DIFY_URL}/console/api/datasets?page=1&ids=${id}`, {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-          "authorization": `Bearer ${this.difyUserToken}`,
+          "authorization": `Bearer ${difyUserToken}`,
           "cache-control": "no-cache",
           "content-type": "application/json",
           "pragma": "no-cache",
@@ -255,12 +253,13 @@ export class DifyService {
   // 获取机器人信息(获取机器人id)
   async fetchBotInfo(bot_id: string) {
     try {
+      const difyUserToken = await this.authService.getCurrentToken()
       // You should use await with fetch to handle the promise properly
       const response = await fetch(`${this.DIFY_URL}/console/api/apps/${bot_id}`, {
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-          "authorization": `Bearer ${this.difyUserToken}`,
+          "authorization": `Bearer ${difyUserToken}`,
           "cache-control": "no-cache",
           "content-type": "application/json",
           "pragma": "no-cache",
@@ -296,14 +295,14 @@ export class DifyService {
     console.log('bot_IdX',bot_Id);
     const url = `${this.DIFY_URL}/console/api/apps/${bot_Id}/model-config`;
     console.log('urlX', url);
-
+    const difyUserToken = await this.authService.getCurrentToken()
     try {
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "accept": "*/*",
           "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-          "authorization": `Bearer ${this.difyUserToken}`,
+          "authorization": `Bearer ${difyUserToken}`,
           "cache-control": "no-cache",
           "content-type": "application/json",
           "pragma": "no-cache",
@@ -367,7 +366,7 @@ export class DifyService {
 
   async newConversation() {
     const url = 'https://dify.cyte.site/api/site'
-    const difyUserToken = this.difyUserToken
+    const difyUserToken = await this.authService.getCurrentToken()
     const header = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${difyUserToken}`

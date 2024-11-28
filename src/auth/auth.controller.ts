@@ -15,7 +15,25 @@ import { JwtAuthGuard } from './jwt.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly usersService: AuthService) {}
+  constructor(private readonly usersService: AuthService) { }
+
+  @Get('getCurrentToken')
+  async getCurrentToken() {
+    return await this.usersService.getCurrentToken();
+  }
+
+  @Post('getToken')
+  async getToken() {
+    try {
+      const tokens = await this.usersService.loginAndGetTokens();
+      console.log('X',tokens);  // 这里会显示 accessToken, refreshToken 和 expiresIn
+      const refreshToken = tokens.refreshToken
+      const accessToken = tokens.accessToken
+      return { accessToken };
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  }
 
   // 获取所有用户
   @UseGuards(JwtAuthGuard)
@@ -38,9 +56,9 @@ export class AuthController {
   async deleteUser(@Body() userDetails: User): Promise<void> {
     await this.usersService.deleteUser(userDetails);
   }
-// 用户登录
+  // 用户登录
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto, ) {
+  async login(@Body() loginUserDto: LoginUserDto,) {
     return this.usersService.login(loginUserDto);
   }
 }
