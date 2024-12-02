@@ -26,7 +26,7 @@ export class AuthController {
   async getToken() {
     try {
       const tokens = await this.usersService.loginAndGetTokens();
-      console.log('X',tokens);  // 这里会显示 accessToken, refreshToken 和 expiresIn
+      console.log('XX',tokens);  // 这里会显示 accessToken, refreshToken 和 expiresIn
       const refreshToken = tokens.refreshToken
       const accessToken = tokens.accessToken
       return { accessToken };
@@ -42,12 +42,12 @@ export class AuthController {
     return this.usersService.getAllUsers();
   }
 
-  // 根据 ID 获取用户
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  async getUserById(@Param('id') id: number): Promise<User> {
-    return this.usersService.getUserById(id);
-  }
+  // // 根据 ID 获取用户
+  // @UseGuards(JwtAuthGuard)
+  // @Get(':id')
+  // async getUserById(@Param('id') id: number): Promise<User> {
+  //   return this.usersService.getUserById(id);
+  // }
 
   // 删除用户
   @UseGuards(JwtAuthGuard)

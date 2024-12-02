@@ -17,6 +17,9 @@ export class Question {
   @Column("text", { nullable: true })
   correctAnswer: string;
 
+  @Column('text', { nullable: true })
+  explanation: string;
+
   @Column({ nullable: true })// 默认给1
   score: number;
 

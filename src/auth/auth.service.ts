@@ -28,7 +28,6 @@ export class AuthService {
   private DIFY_USER_USRN: string
   private DIFY_USER_PSWD: string
   private DIFY_URL: string
-  // 在authService类构造函数中注入JwtService
   private readonly CONFIG_FILE_PATH = '/Users/loopshen/Downloads/be/reaBot-be/dify_user_token_config.json';
   constructor(
     private dataSource: DataSource,

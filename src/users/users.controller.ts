@@ -48,7 +48,11 @@ export class UsersController {
       mode: "chat",
       description: "read_bot"
     }
+    console.log('botSettings', botSettings);
+
     const newBot = await this.userService.createBot(botSettings)
+    console.log('newBot', newBot);
+    
     // 获取并且存储机器人的key
     const botKey = (await this.userService.saveBotKey(newBot.id)).token
     // 注册用户

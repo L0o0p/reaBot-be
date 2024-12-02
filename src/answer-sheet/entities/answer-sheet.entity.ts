@@ -15,6 +15,12 @@ export class AnswerSheet {
   @CreateDateColumn({ name: 'creation_timestamp' })
   createdAt: Date;
 
+  @Column("text", {nullable: true})
+  articleATimeToken: string;
+
+  @Column("text", { nullable: true })
+  articleBTimeToken: string;
+
   @ManyToOne(() => Paper, paper => paper.answerSheets)
   paper: Paper;
 

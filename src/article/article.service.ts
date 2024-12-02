@@ -545,7 +545,15 @@ export class ArticleService {
         } else {
             throw new Error('No answers found for the article');
         }
-    }
+  }
+  
+  async getQuestionsWithAnswers(articleBId: number): Promise<any[]> {
+    // Fetch the article with its associated questions and answers
+    return this.articleRepository.findOne({
+      where: { id: articleBId },
+      relations: ['questions', 'questions.answers'],
+    });
+  }
 }
 
 

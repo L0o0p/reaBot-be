@@ -31,6 +31,7 @@ import { DataSource } from 'typeorm';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { HttpModule } from '@nestjs/axios';
+import { TextPreprocessorService } from './article/upload.service';
 @Module({
   imports: [
 ConfigModule.forRoot({
@@ -69,6 +70,7 @@ ConfigModule.forRoot({
     AnswerSheetService,
     JwtService,
     ConfigService,  // Register your implementation of ConfigService as a provider
+    TextPreprocessorService
   ],
 })
 export class AppModule { }

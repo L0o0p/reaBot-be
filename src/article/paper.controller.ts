@@ -121,55 +121,55 @@ export class PaperController {
 
     @Get('testt')
     async testt(
-    @Req() req: {
-      user: {
-        id: number;
-        userId: number;
-        username: string;
-      }
-    }
+        @Req() req: {
+            user: {
+                id: number;
+                userId: number;
+                username: string;
+            }
+        }
     ) {
-        console.log('req.user.userId',req.user.userId);
+        console.log('req.user.userId', req.user.userId);
         const lastArticle = await this.paperService.getProgress(req.user.userId)
         const currentArticleKey = lastArticle.currentArticleKey
         const currentQuestionNum = lastArticle.currentQuestionNum
-        const progress = {currentArticleKey, currentQuestionNum}
+        const progress = { currentArticleKey, currentQuestionNum }
         // return lastArticle
-        return  progress ;
+        return progress;
     }
 
     @Get('currentPaper')
     async getCurrentPaperAndArticle(
-    @Req() req: {
-      user: {
-        id: number;
-        userId: number;
-        username: string;
-      }
-    }
+        @Req() req: {
+            user: {
+                id: number;
+                userId: number;
+                username: string;
+            }
+        }
     ) {
-    const userId = req.user.userId;
-    console.log('req.user.userId', userId);
+        const userId = req.user.userId;
+        console.log('req.user.userId', userId);
 
-    const lastArticle = await this.paperService.getProgress(userId);
+        const lastArticle = await this.paperService.getProgress(userId);
 
-    // 初始化默认的进度
-    let progress = {
-      currentArticleKey: null,
-      currentQuestionNum: null
-    };
+        // 初始化默认的进度
+        let progress = {
+            currentArticleKey: null,
+            currentQuestionNum: null
+        };
 
-    // 检查 lastArticle 是否存在并且有有效的属性
-    if (lastArticle && lastArticle.currentArticleKey !== undefined && lastArticle.currentQuestionNum !== undefined) {
-      progress = {
-        currentArticleKey: lastArticle.currentArticleKey,
-        currentQuestionNum: lastArticle.currentQuestionNum
-      };
-    }
-    console.log('lastArticle',lastArticle);
-    
-    const currentPaper = await this.paperService.getCurrentPaper(userId);
-    return { currentPaper, progress };
+        // 检查 lastArticle 是否存在并且有有效的属性
+        if (lastArticle && lastArticle.currentArticleKey !== undefined && lastArticle.currentQuestionNum !== undefined) {
+            progress = {
+                currentArticleKey: lastArticle.currentArticleKey,
+                currentQuestionNum: lastArticle.currentQuestionNum
+            };
+        }
+        console.log('lastArticle', lastArticle);
+
+        const currentPaper = await this.paperService.getCurrentPaper(userId);
+        return { currentPaper, progress };
     }
 
 
@@ -183,9 +183,16 @@ export class PaperController {
             }
         }
     ) {
-        return await this.paperService.estimateTime(req.user.userId);
-        // 最近提交的答案
-        // 上一个文章的最后一个答案的提交
+        try {
+            const userId = req.user.userId;
+            // 计算刚做完这篇文章的阅读时间
+            const timeToken = await this.paperService.estimateTime(userId);
+            // 阅读时间入库
+
+            return timeToken
+        } catch (error) {
+            // res.status(500).json({ error: error.message });
+        }
     }
 
     //修改机器人使用的知识库(使用标题)
@@ -193,12 +200,12 @@ export class PaperController {
     @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
     async changeSourceLibraryByTittle(
         @Req() req: {
-      user: {
-        id: number;
-        userId: number;
-        username: string;
-      }
-    }
+            user: {
+                id: number;
+                userId: number;
+                username: string;
+            }
+        }
     ) {
         // 知道现在的article ⬇️
         const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.userId)).id
@@ -209,12 +216,12 @@ export class PaperController {
                 { articleBId: currentArticle_id, }
             ]
         }))).id
-        
+
         //👉 插入一个计算当前paper总分的函数并且把他录入对应答题卡
-        const currentPaperScore = await this.paperService.getPaperScore(
-            currentPaper_id,
-            req.user.userId
-        )
+        // const currentPaperScore = await this.paperService.getPaperScore(
+        //     currentPaper_id,
+        //     req.user.userId
+        // )
 
         // 推算出下一个paper的id ⬇️
         // 推算出下一个paper的articleA ⬇️
@@ -272,7 +279,7 @@ export class PaperController {
             ]
         })).id
         const feedback = {
-            previousPaperScore:currentPaperScore,
+            // previousPaperScore: currentPaperScore,
             paperId: newPaperId,//paperId
             articleA: {
                 title: articleA_title,
@@ -282,7 +289,7 @@ export class PaperController {
                 title: articleB_title,
                 content: articleB_Text,
             },
-            result:result
+            result: result
         }
         return feedback
     }
@@ -290,17 +297,17 @@ export class PaperController {
     @Get('/getPaperScore')
     async getPaperScore(
         @Req() req: {
-      user: {
-        id: number;
-        userId: number;
-        username: string;
-      }
-    }
+            user: {
+                id: number;
+                userId: number;
+                username: string;
+            }
+        }
     ) {
         // 知道现在的article ⬇️
         const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.userId)).id
-        console.log('currentArticle_id',currentArticle_id);
-        
+        console.log('currentArticle_id', currentArticle_id);
+
         // 知道现在的paper ⬇️
         const currentPaper_id = ((await this.paperRepository.findOne({
             where: [
@@ -308,7 +315,7 @@ export class PaperController {
                 { articleBId: currentArticle_id, }
             ]
         }))).id
-        
+
         //👉 插入一个计算当前paper总分的函数并且把他录入对应答题卡
         const currentPaperScore = await this.paperService.getPaperScore(
             currentPaper_id,

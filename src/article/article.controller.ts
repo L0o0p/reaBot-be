@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaperService } from './paper.service';
 import { UsersService } from 'src/users/users.service';
+import { TextPreprocessorService } from './upload.service';
 
 
 interface QuestionItem {
@@ -25,6 +26,7 @@ export class ArticleController {
     private readonly appService: ArticleService,
     private readonly paperService: PaperService,
     private readonly chatService: DifyService,
+    private readonly uploadService: TextPreprocessorService,
     // private dataSource: DataSource,
     private userService: UsersService,
     @InjectRepository(Question)
@@ -323,8 +325,9 @@ export class ArticleController {
     }
   ) {
     console.log('req.user.userId', req.user);
-    const library_id = await this.chatService.fetchBotLibraryId(req.user.userId)
-    const title = (await this.chatService.getArticleName(library_id, req.user.userId)).title
+    const userId = req.user.userId;
+    const library_id = await this.chatService.fetchBotLibraryId(userId)
+    const title = (await this.chatService.getArticleName(library_id, userId)).title
     const article_id = (await this.getUserById(title)).id
     console.log('article_id', article_id);
 
@@ -351,8 +354,10 @@ export class ArticleController {
     return index
   }
 
-  @Get('get/timeCaculation')
-  async getTimeCaculation(
+  @Post('get/test')
+  @UseInterceptors(FileInterceptor('file'))
+  async processText(
+    @UploadedFile() file: Express.Multer.File,
     @Req() req: {
       user: {
         id: number;
@@ -361,5 +366,16 @@ export class ArticleController {
       }
     }
   ) {
+    console.log(file);
+    const buf = { buffer: Buffer.from(file.buffer) }
+    const rawTextData = await mammoth.extractRawText(buf);
+    const rawText = rawTextData.value;
+    console.log('rawText', rawText);
+    const procceedText = await this.uploadService.processText(rawText)
+    console.log('procceedText', procceedText);
+    const articleId = (await this.appService.getPropertyArticle(req.user.userId)).id
+    const result = await this.uploadService.getQuestions(procceedText.questionsText, articleId)
+    return result
+
   }
 }
