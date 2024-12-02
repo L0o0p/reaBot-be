@@ -230,7 +230,7 @@ export class PaperController {
         console.log('paperList', paperList);
         // 设定规则，如果没有下一个就选择最初的paper
         let nextPaperId = await this.paperService.findNextMinId(currentPaper_id)
-        if (nextPaperId > paperList.length) { nextPaperId = paperList[0].id }
+        if (!nextPaperId) { nextPaperId = paperList[0].id }
         // 拿到下一个paper对象
         const nextPaper = await this.paperService.getPaperById(nextPaperId);
         // 切换到articleA的知识库

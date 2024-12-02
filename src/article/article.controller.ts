@@ -31,7 +31,14 @@ export class ArticleController {
     private userService: UsersService,
     @InjectRepository(Question)
     private questionRepository: Repository<Question>,
+    @InjectRepository(Article)
+    private articleRepository: Repository<Article>,
   ) { }
+  
+  @Get('all')
+  async getAllQuestions() {
+    return await this.questionRepository.find();
+  }
 
   // 接受文档并且创建知识库 + 存储到本地数据库(文章)
   @Post('adoc_dify')
@@ -354,7 +361,7 @@ export class ArticleController {
     return index
   }
 
-  @Post('get/test')
+  @Post('get/uploadDoc')
   @UseInterceptors(FileInterceptor('file'))
   async processText(
     @UploadedFile() file: Express.Multer.File,
@@ -366,16 +373,45 @@ export class ArticleController {
       }
     }
   ) {
+    // 1. 接受文档并且创建知识库 + 存储到本地数据库
+    const article_title = file.originalname.split('.')[0] // 获取文件名
+    console.log('article_title', article_title);
+    const data = await this.appService.createLibrary(article_title) // 使用上传内容创建空知识库
+    console.log('data', data);
+
+    const id = data.id // 新知识库的id
+    // const id = '2cf5d66d-a3fe-481e-9619-3b0a4d688e94' // 测试createLibraryByDoc使用知识库
+    const feedback = await this.appService.createLibraryByDoc(file, id)
+    console.log('data', data);
+    console.log('feedback', feedback);
+
+    // 2. 处理doc中的article文本并储存文章（doc+内容文本）
+    await this.uploadService.processArticle(file, id)
+    if (!feedback || !data) return { code: 400, message: '创建知识库失败,有可能因为文件名超过40个字符' }
     console.log(file);
+
+    // 读取doc内容
     const buf = { buffer: Buffer.from(file.buffer) }
     const rawTextData = await mammoth.extractRawText(buf);
     const rawText = rawTextData.value;
     console.log('rawText', rawText);
+
+    // 将doc内容中的「练习题目」「阅读文章」「跟踪练习」分开
     const procceedText = await this.uploadService.processText(rawText)
     console.log('procceedText', procceedText);
-    const articleId = (await this.appService.getPropertyArticle(req.user.userId)).id
-    const result = await this.uploadService.getQuestions(procceedText.questionsText, articleId)
-    return result
 
+    // 「练习题目」进行处理并存储
+    const articleId = (await this.appService.getPropertyArticle(req.user.userId)).id
+    const procceedQustions = await this.uploadService.processAndStoreQuestions(procceedText.questionsText, articleId)// 处理练习题
+    const procceedF_Qustions = await this.uploadService.processAndStoreF_Questions(procceedText.trackingQuestionsText, articleId)// 处理跟踪题
+
+    let result = {
+      procceedQustions: procceedQustions,
+      procceedF_Qustions: procceedF_Qustions
+    };
+    return result
   }
+
+
 }
+

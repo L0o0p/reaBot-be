@@ -23,6 +23,15 @@ export class Question {
   @Column({ nullable: true })// 默认给1
   score: number;
 
+  @Column("text", { nullable: true })
+  f_Question: string;
+
+  @Column("text", { array: true, nullable: true })
+  f_Options: string[];
+
+  @Column("text", { nullable: true })
+  f_correctAnswer: string;
+
   @ManyToOne(() => Article, article => article.questions)
   @JoinColumn({ name: 'articleId' })
   article: Article;

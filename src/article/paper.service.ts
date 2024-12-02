@@ -452,14 +452,16 @@ export class PaperService {
         return result.id
     }
 
-    async findNextMinId(currentId: number): Promise<number | undefined> {
+    async findNextMinId(currentId: number): Promise<number | null> {
         const result = await this.paperRepository
             .createQueryBuilder("paper")
-            .select("MIN(paper.id)", "minId")
+            .select("paper.id")
             .where("paper.id > :currentId", { currentId })
-            .getRawOne();
+            .orderBy("paper.id", "ASC")
+            .limit(1)
+            .getOne();
 
-        return result ? result.minId : undefined;
+        return result ? result.id : null;
     }
 }
 
