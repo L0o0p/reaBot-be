@@ -263,7 +263,7 @@ export class ArticleService {
     const url = `${this.DIFY_URL}/v1/datasets`
 
     const options = {
-      method: 'POST',
+      method: 'POST', 
       headers: {
         'Authorization': `Bearer ${this.difyDatabaseKey}`,
         'Content-Type': 'application/json'

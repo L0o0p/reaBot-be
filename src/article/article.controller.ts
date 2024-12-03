@@ -34,10 +34,10 @@ export class ArticleController {
     @InjectRepository(Article)
     private articleRepository: Repository<Article>,
   ) { }
-  
+
   @Get('all')
   async getAllQuestions() {
-    return await this.questionRepository.find();
+    return await this.articleRepository.find();
   }
 
   // 接受文档并且创建知识库 + 存储到本地数据库(文章)
@@ -334,9 +334,9 @@ export class ArticleController {
     console.log('req.user.userId', req.user);
     const userId = req.user.userId;
     const library_id = await this.chatService.fetchBotLibraryId(userId)
-    const title = (await this.chatService.getArticleName(library_id, userId)).title
+    const getArticle = (await this.chatService.getArticleName(library_id, userId))
+    const title = getArticle.title
     const article_id = (await this.getUserById(title)).id
-    console.log('article_id', article_id);
 
     const articleQuestions: QuestionItem[] = await this.appService.getQuestionsByArticleID(article_id)
     return articleQuestions;
@@ -388,7 +388,7 @@ export class ArticleController {
     // 2. 处理doc中的article文本并储存文章（doc+内容文本）
     await this.uploadService.processArticle(file, id)
     if (!feedback || !data) return { code: 400, message: '创建知识库失败,有可能因为文件名超过40个字符' }
-    console.log(file);
+    console.log('file', file);
 
     // 读取doc内容
     const buf = { buffer: Buffer.from(file.buffer) }
@@ -401,15 +401,27 @@ export class ArticleController {
     console.log('procceedText', procceedText);
 
     // 「练习题目」进行处理并存储
-    const articleId = (await this.appService.getPropertyArticle(req.user.userId)).id
-    const procceedQustions = await this.uploadService.processAndStoreQuestions(procceedText.questionsText, articleId)// 处理练习题
-    const procceedF_Qustions = await this.uploadService.processAndStoreF_Questions(procceedText.trackingQuestionsText, articleId)// 处理跟踪题
+    const articleTitle = file.originalname.split('.')[0];
+    const articleId = (await this.articleRepository.findOne({ where: { title: articleTitle } }))?.id
+    console.log('articleId', articleId);
+    // const articleId = (await this.appService.getPropertyArticle(req.user.userId)).id
 
-    let result = {
-      procceedQustions: procceedQustions,
-      procceedF_Qustions: procceedF_Qustions
-    };
-    return result
+    // 处理跟踪题
+    const procceedF_Qustions = await this.uploadService.processFQuestions(
+      procceedText.trackingQuestionsText,
+    )
+    console.log('procceedF_Qustions', procceedF_Qustions.length, procceedF_Qustions);
+    // 处理练习题
+    const procceedQustions = await this.uploadService.processQuestions(
+      procceedText.questionsText,
+      procceedF_Qustions,
+      articleId
+    )
+    console.log('procceedQustions', procceedQustions);
+
+ 
+ 
+    return procceedF_Qustions
   }
 
 

@@ -9,16 +9,16 @@ export class AnswerSheet {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({nullable: true})
+  @Column({ nullable: true, default: 0 })
   totalScore: number;
 
   @CreateDateColumn({ name: 'creation_timestamp' })
   createdAt: Date;
 
-  @Column("text", {nullable: true})
+  @Column("text", { nullable: true})
   articleATimeToken: string;
 
-  @Column("text", { nullable: true })
+  @Column("text", { nullable: true})
   articleBTimeToken: string;
 
   @ManyToOne(() => Paper, paper => paper.answerSheets)

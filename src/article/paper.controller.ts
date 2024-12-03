@@ -119,25 +119,6 @@ export class PaperController {
         return newPaper
     }
 
-    @Get('testt')
-    async testt(
-        @Req() req: {
-            user: {
-                id: number;
-                userId: number;
-                username: string;
-            }
-        }
-    ) {
-        console.log('req.user.userId', req.user.userId);
-        const lastArticle = await this.paperService.getProgress(req.user.userId)
-        const currentArticleKey = lastArticle.currentArticleKey
-        const currentQuestionNum = lastArticle.currentQuestionNum
-        const progress = { currentArticleKey, currentQuestionNum }
-        // return lastArticle
-        return progress;
-    }
-
     @Get('currentPaper')
     async getCurrentPaperAndArticle(
         @Req() req: {
@@ -165,11 +146,16 @@ export class PaperController {
                 currentArticleKey: lastArticle.currentArticleKey,
                 currentQuestionNum: lastArticle.currentQuestionNum
             };
+        } else {
+            progress = {
+                currentArticleKey: 'A',
+                currentQuestionNum: 0
+            };
         }
         console.log('lastArticle', lastArticle);
 
         const currentPaper = await this.paperService.getCurrentPaper(userId);
-        return { currentPaper, progress };
+        return { currentPaper, progress, lastArticle };
     }
 
 
@@ -243,20 +229,23 @@ export class PaperController {
         const docsA = (await this.articleService.getArticleDocByTitle(articleA_title))[0];
         const docsB = (await this.articleService.getArticleDocByTitle(articleB_title))[0];
         console.log(docsA.content);
+
+        const articleA_Text = (await this.articleRepository.findOne({ where: { id: articleAId } })).content;
+        const articleB_Text = (await this.articleRepository.findOne({ where: { id: articleBId } })).content;
         // 从doc获取文本内容
-        let articleA_Text, articleB_Text = '';
-        if (docsA && docsA.content) {
-            console.log('Entered the if statement');
-            const result = await mammoth.extractRawText({ buffer: Buffer.from(docsA.content) });
-            articleA_Text = result.value;
-            console.log('articleA_Text:', articleA_Text);
-        }
-        if (docsB && docsB.content) {
-            console.log('Entered the if statement');
-            const result = await mammoth.extractRawText({ buffer: Buffer.from(docsB.content) });
-            articleB_Text = result.value;
-            console.log('articleB_Text:', articleB_Text);
-        }
+        // let articleA_Text, articleB_Text = '';
+        // if (docsA && docsA.content) {
+        //     console.log('Entered the if statement');
+        //     const result = await mammoth.extractRawText({ buffer: Buffer.from(docsA.content) });
+        //     articleA_Text = result.value;
+        //     console.log('articleA_Text:', articleA_Text);
+        // }
+        // if (docsB && docsB.content) {
+        //     console.log('Entered the if statement');
+        //     const result = await mammoth.extractRawText({ buffer: Buffer.from(docsB.content) });
+        //     articleB_Text = result.value;
+        //     console.log('articleB_Text:', articleB_Text);
+        // }
         const newPaper = {
             articleA_title: articleA_Text,
             articleB_title: articleB_Text,

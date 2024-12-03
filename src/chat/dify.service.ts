@@ -151,7 +151,7 @@ export class DifyService {
       })
       .catch(error => {
         console.error('There was a problem with your fetch operation:', error); // 在控制台输出可能出现的错误
-        throw error; // 将错误向上抛出，以便调用者可以处理
+        throw error; // 将错误向上抛出，以便调用者可以处理 
       });
   }
 

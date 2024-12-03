@@ -265,7 +265,10 @@ export class PaperService {
             take: 1
         }))[0]
 
-        if (!lastAnswer || Object.keys(lastAnswer).length === 0) { console.log('答案表上还没有填入任何答案，answer表没有数据'); return null; }
+        if (!lastAnswer || Object.keys(lastAnswer).length === 0) {
+            console.log('答案表上还没有填入任何答案，answer表没有数据');
+            return null;
+        }
         const lastQuestion = lastAnswer.question
         // 根据question获取article
         const lastArticle = await this.articleRepository.findOne({
@@ -423,7 +426,7 @@ export class PaperService {
         }
 
         console.log('Total Score:', totalScore); // 输出最终总分
-        this.answerSheetRepository.update({ id: answerSheetId }, { totalScore: totalScore });// 更新答案表的分数
+        this.answerSheetRepository.update({ id: answerSheetId }, { totalScore: totalScore ?? 0 });// 更新答案表的分数
         return totalScore;
 
     }
