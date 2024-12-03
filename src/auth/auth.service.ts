@@ -155,6 +155,7 @@ export class AuthService {
 
   // 用于创建dify的token
   async loginAndGetTokens(): Promise<any> {
+    console.log('自动获取token');
     try {
       this.initializeConfigDirectory();
       const url = `${this.DIFY_URL}/console/api/login`;

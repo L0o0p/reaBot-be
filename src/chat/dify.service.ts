@@ -84,6 +84,8 @@ export class DifyService {
 
     // 等待 postData 方法返回结果
     const { conversation_id, answer } = await this.postData(url, body, headers);
+    console.log( conversation_id, answer);
+    
     this.updateUserConversation(conversation_id, user_found)
     // 根据业务需求调整返回值
     return { conversation_id, answer };
