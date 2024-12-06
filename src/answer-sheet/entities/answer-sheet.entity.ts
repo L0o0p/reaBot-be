@@ -1,6 +1,6 @@
-import { Paper } from 'src/article/entities/paper.entity';
-import { User } from 'src/users/entity/users.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn } from 'typeorm';
+import { Paper } from '../../article/entities/paper.entity';
+import { User } from '../../users/entity/users.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 import { Answer } from './answers.entity';
 
 
@@ -15,12 +15,37 @@ export class AnswerSheet {
   @CreateDateColumn({ name: 'creation_timestamp' })
   createdAt: Date;
 
-  @Column("text", { nullable: true})
+  @Column({
+    type: 'timestamp',
+    nullable: true
+  })
+  articleAStartedAt: Date;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true
+  })
+  articleAFinishedAt: Date;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true
+  })
+  articleBStartedAt: Date;
+
+  @Column({
+    type: 'timestamp',
+    nullable: true
+  })
+  articleBFinishedAt: Date;
+
+  @Column("text", { nullable: true })
   articleATimeToken: string;
 
-  @Column("text", { nullable: true})
+  @Column("text", { nullable: true })
   articleBTimeToken: string;
 
+  @Index('idx_paper_user_unique', ['paper', 'user'], { unique: true })
   @ManyToOne(() => Paper, paper => paper.answerSheets)
   paper: Paper;
 

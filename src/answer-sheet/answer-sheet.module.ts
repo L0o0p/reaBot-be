@@ -11,7 +11,7 @@
 // import { DifyService } from 'src/chat/dify.service';
 // import { DifyController } from 'src/chat/dify.controller';
 // import { AnswerSheet } from './entities/answer-sheet.entity';
-// import { Paper } from 'src/article/entities/paper.entity';
+// import { Paper } from '../../article/entities/paper.entity';
 // import { SupplementalQuestion } from './entities/supplementalQuestion.entity';
 
 // @Module({

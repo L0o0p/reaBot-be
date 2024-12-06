@@ -10,7 +10,7 @@
 // import { Paper } from './entities/paper.entity';
 // import { Question } from 'src/answer-sheet/entities/questions.entity';
 // import { Answer } from 'src/answer-sheet/entities/answers.entity';
-// import { AnswerSheet } from 'src/answer-sheet/entities/answer-sheet.entity';
+// import { AnswerSheet } from '../../answer-sheet/entities/answer-sheet.entity';
 // import { AnswerSheetModule } from 'src/answer-sheet/answer-sheet.module';
 // import { AnswerSheetService } from 'src/answer-sheet/answer-sheet.service';
 

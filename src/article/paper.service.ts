@@ -7,7 +7,7 @@ import {
     Logger,
     NotFoundException,
 } from '@nestjs/common';
-import { DataSource, getRepository, Repository, Timestamp } from 'typeorm';
+import { DataSource, getRepository, In, Repository, Timestamp } from 'typeorm';
 import { Article } from './entities/article.entity';
 import { CreateArticle, CreatePaper } from './article.dto';
 import { response } from 'express';
@@ -20,7 +20,7 @@ import { DocFile } from './entities/docFile.entity';
 import { Paper } from './entities/paper.entity';
 import { ArticleService } from './article.service';
 import { Answer } from 'src/answer-sheet/entities/answers.entity';
-import { AnswerSheet } from 'src/answer-sheet/entities/answer-sheet.entity';
+import { AnswerSheet } from '../answer-sheet/entities/answer-sheet.entity';
 import { Question } from 'src/answer-sheet/entities/questions.entity';
 import { AnswerSheetService } from 'src/answer-sheet/answer-sheet.service';
 import { UsersService } from 'src/users/users.service';
@@ -45,8 +45,6 @@ export class PaperService {
         private dataSource: DataSource,
         private articleService: ArticleService,
         private answerSheetService: AnswerSheetService,
-        private chatSheetService: DifyService,
-        private userService: UsersService,
     ) {
         this.paperRepository = this.dataSource.getRepository(Paper);
         this.articleRepository = this.dataSource.getRepository(Article);
@@ -119,117 +117,143 @@ export class PaperService {
         }
     }
 
-    async estimateTime(userId: number): Promise<any> {
-        // 最近提交的答案
-        console.log('getProgress');
-        // 根据该user最新的answer获取qustions
-        console.log('userId', userId);
-        // 找到本用户的答题卡
-        const lastestAnswerSheet = await this.answerSheetRepository.findOne({
-            where: { user: { id: userId } },
-            order: { createdAt: 'DESC' },
-            // select: ['id']
-        })
-        const lastestAnswerSheetId = lastestAnswerSheet.id
-        console.log('lastestAnswerSheet', lastestAnswerSheetId);
-        if (!lastestAnswerSheetId) { console.log('没有答案表'); return null; }
-        // 找到本用户最近提交的答案
-        const lastestAnswer = (await this.answersRepository.find({
-            where: {
-                answerSheet: { id: lastestAnswerSheetId }
-            },
-            relations: {
-                question: true  // 明确加载question关联
-            },
-            order: {
-                updatedAt: 'DESC'
-            },
-            take: 1
-        }))[0]
-        // 上一个文章的最后一个答案的提交
-        // 上一个文章怎么知道 =》要知道当前的Paper & Article
-        // 当前文章：lastAnswer =》questionsId =》Article
-        if (!lastestAnswer || Object.keys(lastestAnswer).length === 0) { console.log('答案表上还没有填入任何答案，answer表没有数据'); return null; }
-        const lastQuestion = lastestAnswer.question
-        // 根据question获取article
-        const lastestArticle = await this.articleRepository.findOne({
-            where: {
-                id: lastQuestion.articleId
-            }
-        })
-        if (!lastestArticle) { console.log('没有找到对应的article'); return null; }
-        const title = lastestArticle.title
-        const articleId = lastestArticle.id
-        console.log('title', title);
-        console.log('articleId', articleId);
-        // 根据article获取paper
-        const lastestPaper = await this.paperRepository.findOne({
-            where: [
-                { articleA: { title } },
-                { articleB: { title } }
-            ]
-        });
-        if (!lastestPaper) { console.log('没有找到对应的paper'); return null; }
-        console.log('lastestPaper', lastestPaper);
-        // 查找上一篇文章的问题集合：
-        const findLastArticleQuestions = async () => {
-            // 先判断是articleA还是articleB
-            let lastArticleIsAorB = ''
-            // 如果现在是ArticleA，找上一Paper的ArticleB
-            if (lastestPaper.articleAId === lastestArticle.id) {
-                console.log('知道的 article 对象是 paper 的 articleA');
-                // 那么上一篇就是 paper 的 articleB
-                lastArticleIsAorB = 'B'
-                // 找上一个Paper：将所有PaperId作为一个集合，找到所有Id比自己小的，然后排序，取最后一个
-                const allPaperIds = await this.paperRepository.find({ select: ['id'] });
-                const sortedPaperIds = allPaperIds.sort((a, b) => a.id - b.id);
-                const lastPaperId = sortedPaperIds.find(p => p.id < lastestPaper.id);
-                // 用上一个Paper的ArticleBId去查找问题
-                const lastPaper = await this.paperRepository.findOne({ where: { id: lastPaperId.id } });
-                const lastArticle = lastPaper.article;
-                const lastArticleId = lastArticle.id;
-                const lastArticleQuestions = await this.questionsRepository.find({ where: { articleId: lastArticleId } });
-                return { lastArticleQuestions, lastArticleIsAorB }
-            }
-            // 如果现在是ArticleB，直接找上一篇文章
-            else if (lastestPaper.articleBId === lastestArticle.id) {
-                console.log('知道的 article 对象是 paper 的 articleB');
-                // 那么上一篇就是 articleA
-                lastArticleIsAorB = 'A'
-                const lastArticleId = lastestPaper.articleBId
-                const lastArticle = await this.articleRepository.findOne({
-                    where: { id: lastArticleId },
-                    relations: ['questions']
-                });
-                const lastArticleQuestions: [] = lastArticle.questions
-                if (!lastArticle || !lastArticleQuestions) {
-                    console.log('没有找到上一篇文章');
-                    return null;
-                }
-                console.log('找到了', lastArticleQuestions);
-                return { lastArticleQuestions, lastArticleIsAorB };
-            } else {
-                console.log('知道的 article 对象不在该 paper 中');
-                return null
-            }
-        }
-        const { lastArticleQuestions, lastArticleIsAorB } = await findLastArticleQuestions()
-        // 获取这个集合的最后一个问题的答案的更新时间
-        if (lastArticleQuestions && lastArticleQuestions.length > 0) {
-            const lastOneQuestionOfLastArticle: Answer = lastArticleQuestions[lastArticleQuestions.length - 1]
-            const answerOflastOneQuestionOfLastArticle = await this.answersRepository.findOne({
-                where: {
-                    question: { id: lastOneQuestionOfLastArticle.id }
-                },
-            });
-            const startPoint = answerOflastOneQuestionOfLastArticle.updatedAt;
-            const endPoint = lastestAnswer.updatedAt
-            // return { endPoint, startPoint }
-            const timeTaken: string = calculateTiming(startPoint, endPoint)
-            this.recordTimeToken(timeTaken, lastArticleIsAorB, lastestAnswerSheetId)
+    // async estimateTime(userId: number): Promise<any> {
 
-            return timeTaken
-        }
+    //     // 最近提交的答案
+    //     console.log('estimateTime');
+    //     // 根据该user最新的answer获取qustions
+    //     console.log('userId', userId);
+    //     // 找到本用户的答题卡
+    //     const lastestAnswerSheet = await this.answerSheetRepository.findOne({
+    //         where: { user: { id: userId } },
+    //         order: { createdAt: 'DESC' },
+    //         // select: ['id']
+    //     })
+    //     const lastestAnswerSheetId = lastestAnswerSheet.id
+    //     console.log('lastestAnswerSheet', lastestAnswerSheetId);
+    //     if (!lastestAnswerSheetId) { console.log('没有答案表'); return null; }
+    //     // 找到本用户最近提交的答案
+    //     const lastestAnswer = (await this.answersRepository.find({
+    //         where: {
+    //             answerSheet: { id: lastestAnswerSheetId }
+    //         },
+    //         relations: {
+    //             question: true  // 明确加载question关联
+    //         },
+    //         order: {
+    //             updatedAt: 'DESC'
+    //         },
+    //         take: 1
+    //     }))[0]
+    //     // 上一个文章的最后一个答案的提交
+    //     // 上一个文章怎么知道 =》要知道当前的Paper & Article
+    //     // 当前文章：lastAnswer =》questionsId =》Article
+    //     if (!lastestAnswer || Object.keys(lastestAnswer).length === 0) { console.log('答案表上还没有填入任何答案，answer表没有数据'); return null; }
+    //     const lastQuestion = lastestAnswer.question
+    //     // 根据question获取article
+    //     const lastestArticle = await this.articleRepository.findOne({
+    //         where: {
+    //             id: lastQuestion.articleId
+    //         }
+    //     })
+    //     if (!lastestArticle) { console.log('没有找到对应的article'); return null; }
+    //     const title = lastestArticle.title
+    //     const articleId = lastestArticle.id
+    //     console.log('title', title);
+    //     console.log('articleId', articleId);
+    //     // 根据article获取paper
+    //     const lastestPaper = await this.paperRepository.findOne({
+    //         where: [
+    //             { articleA: { title } },
+    //             { articleB: { title } }
+    //         ]
+    //     });
+    //     if (!lastestPaper) { console.log('没有找到对应的paper'); return null; }
+    //     console.log('lastestPaper', lastestPaper);
+    //     // 查找上一篇文章的问题集合：
+    //     const findLastArticleQuestions = async () => {
+    //         // 先判断是articleA还是articleB
+    //         let lastArticleIsAorB = ''
+    //         // 如果现在是ArticleA，找上一Paper的ArticleB
+    //         if (lastestPaper.articleAId === lastestArticle.id) {
+    //             console.log('知道的 article 对象是 paper 的 articleA');
+    //             // 那么上一篇就是 paper 的 articleB
+    //             lastArticleIsAorB = 'B'
+    //             // 找上一个Paper：将所有PaperId作为一个集合，找到所有Id比自己小的，然后排序，取最后一个
+    //             const allPaperIds = await this.paperRepository.find({ select: ['id'] });
+    //             const sortedPaperIds = allPaperIds.sort((a, b) => a.id - b.id);
+    //             const lastPaperId = sortedPaperIds.find(p => p.id < lastestPaper.id);
+    //             // 用上一个Paper的ArticleBId去查找问题
+    //             const lastPaper = await this.paperRepository.findOne({ where: { id: lastPaperId.id } });
+    //             const lastArticle = lastPaper.article;
+    //             const lastArticleId = lastArticle.id;
+    //             const lastArticleQuestions = await this.questionsRepository.find({ where: { articleId: lastArticleId } });
+    //             return { lastArticleQuestions, lastArticleIsAorB }
+    //         }
+    //         // 如果现在是ArticleB，直接找上一篇文章
+    //         else if (lastestPaper.articleBId === lastestArticle.id) {
+    //             console.log('知道的 article 对象是 paper 的 articleB');
+    //             // 那么上一篇就是 articleA
+    //             lastArticleIsAorB = 'A'
+    //             const lastArticleId = lastestPaper.articleBId
+    //             const lastArticle = await this.articleRepository.findOne({
+    //                 where: { id: lastArticleId },
+    //                 relations: ['questions']
+    //             });
+    //             const lastArticleQuestions: [] = lastArticle.questions
+    //             if (!lastArticle || !lastArticleQuestions) {
+    //                 console.log('没有找到上一篇文章');
+    //                 return null;
+    //             }
+    //             console.log('找到了', lastArticleQuestions);
+    //             return { lastArticleQuestions, lastArticleIsAorB };
+    //         } else {
+    //             console.log('知道的 article 对象不在该 paper 中');
+    //             return null
+    //         }
+    //     }
+    //     const { lastArticleQuestions, lastArticleIsAorB } = await findLastArticleQuestions()
+    //     // 获取这个集合的最后一个问题的答案的更新时间
+    //     if (lastArticleQuestions && lastArticleQuestions.length > 0) {
+    //         const lastOneQuestionOfLastArticle: Answer = lastArticleQuestions[lastArticleQuestions.length - 1]
+    //         const answerOflastOneQuestionOfLastArticle = await this.answersRepository.findOne({
+    //             where: {
+    //                 question: { id: lastOneQuestionOfLastArticle.id }
+    //             },
+    //         });
+    //         const startPoint = answerOflastOneQuestionOfLastArticle.updatedAt;
+    //         const endPoint = lastestAnswer.updatedAt
+    //         // return { endPoint, startPoint }
+    //         const timeTaken: string = calculateTiming(startPoint, endPoint)
+    //         this.recordTimeToken(timeTaken, lastArticleIsAorB, lastestAnswerSheetId)
+
+    //         return timeTaken
+    //     }
+    // }
+
+    // 计算文章阅读时间
+    // 触发时机：当用户提交答案时，触发这个函数
+    async estimateTime(userId: number): Promise<any> {
+        // 根据当前文章
+        const article = await this.articleService.getPropertyArticle(userId);
+        const articleId = article.id
+        // 找到试卷
+        const paper = await this.findPaperByAricleId(articleId)
+        const paperId = paper.id
+        // 找到答题卡
+        const answerSheet = await this.answerSheetService.getAnswerSheetByPaperAndUserId(paperId, userId)
+        // 取articleAStartedAt、articleAFinishedAt
+        const articleAStartedAt = answerSheet.articleAStartedAt
+        const articleAFinishedAt = answerSheet.articleAFinishedAt
+        return answerSheet
+        // 计算时间差
+        const startPoint = articleAStartedAt
+        const endPoint = articleAFinishedAt
+        // return { endPoint, startPoint }
+        const timeTaken: string = calculateTiming(startPoint, endPoint)
+        // this.recordTimeToken(timeTaken, lastArticleIsAorB, lastestAnswerSheetId)
+
+        return timeTaken
     }
 
     async recordTimeToken(timeTaken: string, lastArticleIsAorB: string, answerSheet: AnswerSheet): Promise<AnswerSheet> {
@@ -356,79 +380,83 @@ export class PaperService {
     }
 
     async getPaperScore(paperId: number, userId: number) {
-        // const articleId = 2;
-        // const answerSheetId = 2;
-        // 取得paperId
-        console.log('userId', userId);
-        console.log('paperId', paperId);
-        // 取得paperId对下的两篇文章的articleId
-        const articleAId = (await this.paperRepository.find({ where: { id: paperId } }))[0].articleAId;
-        const articleBId = (await this.paperRepository.find({ where: { id: paperId } }))[0].articleBId;
-        console.log('articleIdX', articleAId, articleBId);
+        // 使用事务来确保数据一致性
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
 
-        // 找到这个用户对这Paper的答题卡
-        let answerSheet = await this.answerSheetRepository.findOne({
-            where: { paper: { id: paperId }, user: { id: userId } },
-        });
-        console.log('answerSheetX', answerSheet);
-        if (!answerSheet) {
-            answerSheet = this.answerSheetService.CreateAnswerSheet(paperId, userId)
-        }
-        const answerSheetId = answerSheet.id
-        console.log('answerSheetId', answerSheetId);
-
-        let totalScore = 0;
-
-        const questionsA = await this.questionsRepository.find({
-            where: { articleId: articleAId },
-            select: ['id']
-        });
-        // 找到这个articleB的问题
-        const questionsB = await this.questionsRepository.find({
-            where: { articleId: articleBId },
-            select: ['id']
-        });
-
-        const questionIdListA = questionsA.map(question => question.id);
-        console.log('questionIdListA:', questionIdListA);
-        const questionIdListB = questionsB.map(question => question.id);
-        console.log('questionIdListB:', questionIdListB); 1
-        for (const questionId of questionIdListA) {
-            console.log('Checking questionId:', questionId); // 输出当前正在检查的 questionId
-            const answer = await this.answersRepository.findOne({
-                where: {
-                    question: { id: questionId },
-                    answerSheet: { id: answerSheetId },
-                },
-            });
-            console.log('Answer for questionId', questionId, ':', answer); // 输出获取到的答案
-
-            if (answer && answer.isCorrect) {
-                console.log('Correct answer for questionId', questionId); // 确认找到正确答案
-                totalScore += 1;
-            }
-        }
-        for (const questionId of questionIdListB) {
-            console.log('Checking questionId:', questionId); // 输出当前正在检查的 questionId
-            const answer = await this.answersRepository.findOne({
-                where: {
-                    question: { id: questionId },
-                    answerSheet: { id: answerSheetId },
-                },
+        try {
+            // 使用单次查询获取 paper 信息
+            const paper = await queryRunner.manager.findOne(Paper, {
+                where: { id: paperId },
+                select: ['id', 'articleAId', 'articleBId']
             });
 
-            console.log('Answer for questionId', questionId, ':', answer); // 输出获取到的答案
-
-            if (answer && answer.isCorrect) {
-                console.log('Correct answer for questionId', questionId); // 确认找到正确答案
-                totalScore += 1;
+            if (!paper) {
+                throw new NotFoundException('Paper not found');
             }
+
+            const { articleAId, articleBId } = paper;
+
+            // 使用 SELECT FOR UPDATE 锁定行，防止并发问题
+            let answerSheet = await queryRunner.manager.findOne(AnswerSheet, {
+                where: {
+                    paper: { id: paperId },
+                    user: { id: userId }
+                },
+                lock: { mode: 'pessimistic_write' }
+            });
+
+            if (!answerSheet) {
+                answerSheet = queryRunner.manager.create(AnswerSheet, {
+                    paper: { id: paperId },
+                    user: { id: userId },
+                    articleAStartedAt: new Date(),
+                    totalScore: 0
+                });
+                answerSheet = await queryRunner.manager.save(AnswerSheet, answerSheet);
+            }
+
+            // 优化查询，一次性获取所有问题
+            const [questionsA, questionsB] = await Promise.all([
+                queryRunner.manager.find(Question, {
+                    where: { articleId: articleAId },
+                    select: ['id']
+                }),
+                queryRunner.manager.find(Question, {
+                    where: { articleId: articleBId },
+                    select: ['id']
+                })
+            ]);
+
+            // 一次性获取所有答案
+            const allQuestionIds = [...questionsA, ...questionsB].map(q => q.id);
+            const answers = await queryRunner.manager.find(Answer, {
+                where: {
+                    question: { id: In(allQuestionIds) },
+                    answerSheet: { id: answerSheet.id }
+                }
+            });
+
+            // 计算分数
+            const totalScore = answers.filter(answer => answer.isCorrect).length;
+
+            // 更新总分
+            answerSheet.totalScore = totalScore;
+            await queryRunner.manager.save(AnswerSheet, answerSheet);
+
+            // 提交事务
+            await queryRunner.commitTransaction();
+            return totalScore;
+
+        } catch (error) {
+            // 如果出错，回滚事务
+            await queryRunner.rollbackTransaction();
+            throw error;
+        } finally {
+            // 释放查询运行器
+            await queryRunner.release();
         }
-
-        console.log('Total Score:', totalScore); // 输出最终总分
-        this.answerSheetRepository.update({ id: answerSheetId }, { totalScore: totalScore ?? 0 });// 更新答案表的分数
-        return totalScore;
-
     }
 
     async findLibraryIdByPaperId(paperId: number): Promise<string | undefined> {
@@ -465,6 +493,42 @@ export class PaperService {
             .getOne();
 
         return result ? result.id : null;
+    }
+
+
+    // 接收请求 查询即将开始的试卷
+    async getNextPaper(userId: number) {
+        // 知道现在的article ⬇️
+        const currentArticle_id = (await this.articleService.getPropertyArticle(userId)).id
+        // 知道现在的paper ⬇️
+        const currentPaper_id = ((await this.paperRepository.findOne({
+            where: [
+                { articleAId: currentArticle_id, },
+                { articleBId: currentArticle_id, }
+            ]
+        }))).id
+
+        // 推算出下一个paper的id ⬇️
+        // 推算出下一个paper的articleA ⬇️
+        // 先把所有paper拿出来做成一个列表
+        const paperList = await this.getAllPaper()
+        console.log('paperList', paperList);
+        // 设定规则，如果没有下一个就选择最初的paper
+        let nextPaperId = await this.findNextMinId(currentPaper_id)
+        if (!nextPaperId) { nextPaperId = paperList[0].id }
+        // 拿到下一个paper对象
+        const nextPaper = await this.getPaperById(nextPaperId);
+        return nextPaper
+    }
+
+    async findPaperByAricleId(articleId: number) {
+        const paper = await this.paperRepository.find({
+            where: [
+                { articleAId: articleId },
+                { articleBId: articleId }
+            ]
+        });
+        return paper;
     }
 }
 

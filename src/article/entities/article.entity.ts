@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { DocFile } from './docFile.entity';
-import { Question } from 'src/answer-sheet/entities/questions.entity';
+import { Question } from '../../answer-sheet/entities/questions.entity';
 
 @Entity()
 export class Article {
@@ -21,8 +21,7 @@ export class Article {
   tips: string[];
 
   @OneToMany(() => Question, question => question.article)
-    questions: Question[];
-
+  questions: Question[];
 
   @OneToMany(() => DocFile, file => file.article)
   files: File[];

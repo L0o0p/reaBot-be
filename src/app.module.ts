@@ -34,24 +34,25 @@ import { HttpModule } from '@nestjs/axios';
 import { TextPreprocessorService } from './article/upload.service';
 @Module({
   imports: [
-ConfigModule.forRoot({
-  isGlobal: true,
-  envFilePath: '.env',
-  expandVariables: true,
-}),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+      expandVariables: true,
+    }),
     Database,
     TypeOrmModule.forFeature([
       Article,
       File,
-      Question,
+      Question, User,
       AnswerSheet,
       Paper,
       SupplementalQuestion,
       Answer,
+      Dify,
     ]),
     AuthModule,
-      HttpModule
-    
+    HttpModule
+
   ],
   controllers: [
     ArticleController,

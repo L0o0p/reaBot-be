@@ -4,9 +4,7 @@ import { UpdateAnswerSheetDto } from './dto/update-answer-sheet.dto';
 import { DataSource, Repository } from 'typeorm';
 import { Answer } from './entities/answers.entity';
 import { AnswerSheet } from './entities/answer-sheet.entity';
-import { Paper } from 'src/article/entities/paper.entity';
-import { DifyService } from 'src/chat/dify.service';
-import { information } from 'src/chat/dify.dto';
+import { Paper } from '.././article/entities/paper.entity';
 import { Question } from './entities/questions.entity';
 
 @Injectable()
@@ -51,7 +49,7 @@ export class AnswerSheetService {
 
     // Create an answersheet if none exists
     if (!answerSheets.length) {
-      await this.CreateAnswerSheet(paperId, userId);
+      await this.createAnswerSheet(paperId, userId);
       answerSheets = await this.answerSheetRepository.find({
         where: { paper: { id: paperId }, user: { id: userId } }
       });
@@ -72,6 +70,7 @@ export class AnswerSheetService {
       // Update the existing answer
       existingAnswer.answerText = answerText;
       existingAnswer.isCorrect = isCorrect;
+      existingAnswer.ifTracking = isCorrect ? true : false
       await this.answerRepository.save(existingAnswer);
       console.log('Updated existing answer.');
     } else {
@@ -80,6 +79,7 @@ export class AnswerSheetService {
         answerText: answerText,
         isCorrect: isCorrect,
         question: { id: questionId },
+        ifTracking: isCorrect ? true : false,
         answerSheet: { id: answerSheetId }
       };
       await this.answerRepository.save(userAnswer);
@@ -88,12 +88,13 @@ export class AnswerSheetService {
   }
 
   // 新建答题卡
-  async CreateAnswerSheet(paperId: number, userId: number) {
-    const answerSheet = {
+  async createAnswerSheet(paperId: number, userId: number) {
+    const answerSheet = this.answerSheetRepository.create({
       paper: { id: paperId },
       user: { id: userId },
-      totalScore: 0
-    }
+      articleAStartedAt: new Date()
+    });
+
     return await this.answerSheetRepository.save(answerSheet)
   }
 
@@ -110,6 +111,15 @@ export class AnswerSheetService {
     }
   }
 
+  async getAnswerSheetByPaperAndUserId(paperId: number, userId: number) {
+    return await this.answerSheetRepository
+      .createQueryBuilder('answerSheet')
+      .where('answerSheet.paper.id = :paperId', { paperId })
+      .andWhere('answerSheet.user.id = :userId', { userId })
+      .cache(true) // 启用查询缓存
+      .getOne();
+  }
+
   async findLatestAnswerSheet(userId: number): Promise<AnswerSheet | undefined> {
     return this.answerSheetRepository.findOne({
       where: { user: { id: userId } },
@@ -117,5 +127,21 @@ export class AnswerSheetService {
       relations: ['user', 'paper', 'answers'], // 加载关联实体，视具体需求而定
     });
   }
+
+  async checkFollowPapers(userId: number) {
+  }
+
+  async createStartTime() {
+    return
+  }
+
+  async save(answerSheet: AnswerSheet) {
+    const mergedAnswerSheet = this.answerSheetRepository.merge(
+      new AnswerSheet(),
+      answerSheet
+    );
+    return this.answerSheetRepository.save(mergedAnswerSheet);
+  }
+
 
 }

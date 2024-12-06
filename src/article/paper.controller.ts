@@ -12,10 +12,9 @@ import * as mammoth from 'mammoth';
 import { get } from 'http';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from 'src/answer-sheet/entities/questions.entity';
-import { AnswerSheet } from 'src/answer-sheet/entities/answer-sheet.entity';
+import { AnswerSheet } from '../answer-sheet/entities/answer-sheet.entity';
 import { Answer } from 'src/answer-sheet/entities/answers.entity';
 import { UsersService } from 'src/users/users.service';
-
 
 
 @UseGuards(JwtAuthGuard)
@@ -193,45 +192,23 @@ export class PaperController {
             }
         }
     ) {
-        // 知道现在的article ⬇️
-        const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.userId)).id
-        // 知道现在的paper ⬇️
-        const currentPaper_id = ((await this.paperRepository.findOne({
-            where: [
-                { articleAId: currentArticle_id, },
-                { articleBId: currentArticle_id, }
-            ]
-        }))).id
+        // 接收请求 查询即将开始的试卷
+        const nextPaper = await this.paperService.getNextPaper(req.user.userId);
 
-        //👉 插入一个计算当前paper总分的函数并且把他录入对应答题卡
-        // const currentPaperScore = await this.paperService.getPaperScore(
-        //     currentPaper_id,
-        //     req.user.userId
-        // )
-
-        // 推算出下一个paper的id ⬇️
-        // 推算出下一个paper的articleA ⬇️
-        // 先把所有paper拿出来做成一个列表
-        const paperList = await this.getAllPaper()
-        console.log('paperList', paperList);
-        // 设定规则，如果没有下一个就选择最初的paper
-        let nextPaperId = await this.paperService.findNextMinId(currentPaper_id)
-        if (!nextPaperId) { nextPaperId = paperList[0].id }
-        // 拿到下一个paper对象
-        const nextPaper = await this.paperService.getPaperById(nextPaperId);
         // 切换到articleA的知识库
         // 从对象获取title
         const articleAId = nextPaper.articleAId;
         const articleBId = nextPaper.articleBId;
         const articleA_title = (await this.articleService.findByArticleId(articleAId)).title;
         const articleB_title = (await this.articleService.findByArticleId(articleBId)).title;
-        // 从对象获取doc
-        const docsA = (await this.articleService.getArticleDocByTitle(articleA_title))[0];
-        const docsB = (await this.articleService.getArticleDocByTitle(articleB_title))[0];
-        console.log(docsA.content);
-
+        // 获取文章内容
         const articleA_Text = (await this.articleRepository.findOne({ where: { id: articleAId } })).content;
         const articleB_Text = (await this.articleRepository.findOne({ where: { id: articleBId } })).content;
+        // 从对象获取doc
+        // const docsA = (await this.articleService.getArticleDocByTitle(articleA_title))[0];
+        // const docsB = (await this.articleService.getArticleDocByTitle(articleB_title))[0];
+        // console.log(docsA.content);
+
         // 从doc获取文本内容
         // let articleA_Text, articleB_Text = '';
         // if (docsA && docsA.content) {
@@ -260,7 +237,7 @@ export class PaperController {
         const result = await this.chatService.changeSourceLibrary(botId, nextLibraryId);
 
         // 再次获取知识库，看看现在用的是什么知识库（library_id,articleTitle,paperId)
-        const newLibraryId = await this.chatService.fetchBotLibraryId(req.user.userId)
+        // const newLibraryId = await this.chatService.fetchBotLibraryId(req.user.userId)
         const newPaperId = (await this.paperRepository.findOne({
             where: [
                 { articleAId: articleAId },

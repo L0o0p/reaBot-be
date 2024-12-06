@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { User } from './users.entity';
-import { Article } from 'src/article/entities/article.entity';
-import { Paper } from 'src/article/entities/paper.entity';
+import { Article } from '../../article/entities/article.entity';
+import { Paper } from '../../article/entities/paper.entity';
 
 @Entity()
 export class UserProgress {

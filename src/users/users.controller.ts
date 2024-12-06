@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Req, Request, UseGuards } from '@nestjs/co
 import { CreateUser, UsersService } from './users.service';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { DifyService } from 'src/chat/dify.service';
-import { AnswerSheet } from 'src/answer-sheet/entities/answer-sheet.entity';
+import { AnswerSheet } from '../answer-sheet/entities/answer-sheet.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AnswerSheetService } from 'src/answer-sheet/answer-sheet.service';
@@ -31,7 +31,7 @@ export class UsersController {
   ) { }
 
   @Get('lateAnswerSheet')
-    async findLatestAnswerSheet(): Promise<AnswerSheet | undefined> {
+  async findLatestAnswerSheet(): Promise<AnswerSheet | undefined> {
     const userId: number = 1
     return await this.answerSheetService.findLatestAnswerSheet(userId)
   }
@@ -40,7 +40,7 @@ export class UsersController {
   //   handles the post request to /users/create endpoint to create new user
   async signUp(@Body() user: CreateUser) {
     // 创建新的机器人
-    const botSettings:CreateBot = {
+    const botSettings: CreateBot = {
       name: user.username,
       icon_type: "emoji",
       icon: "smiley",
@@ -52,15 +52,15 @@ export class UsersController {
 
     const newBot = await this.userService.createBot(botSettings)
     console.log('newBot', newBot);
-    
+
     // 获取并且存储机器人的key
     const botKey = (await this.userService.saveBotKey(newBot.id)).token
     // 注册用户
-    const newUser = await this.userService.register(user, newBot.id,botKey);
+    const newUser = await this.userService.register(user, newBot.id, botKey);
     const newUser_id = newUser.id;
     // 给用户创建一个进度
     const paperId = await this.paperService.getPaperWithSmallestId()
-    await this.answerSheetService.CreateAnswerSheet(paperId, newUser_id)
+    await this.answerSheetService.createAnswerSheet(paperId, newUser_id)
     const libraryId = await this.paperService.findLibraryIdByPaperId(paperId)
     // 最新的答题卡（进度）=> 对应paperId.articleA => libraryId => changeSourceLibrary(newBot_id, libraryId)
     const result = await this.chatService.changeSourceLibrary(newBot.id, libraryId);
@@ -68,10 +68,10 @@ export class UsersController {
     // const newProgress = await this.userService.createUserProgress(newUser);
     return newUser
   }
-    @Get('test')
+  @Get('test')
   //   handles the post request to /users/create endpoint to create new user
-    async test() {
-      return await this.paperService.findNextMinId(2)
+  async test() {
+    return await this.paperService.findNextMinId(2)
   }
 
 
@@ -90,6 +90,6 @@ export class UsersController {
     return await this.userService.createBot(botSettings)
   }
 
-  
+
 }
 

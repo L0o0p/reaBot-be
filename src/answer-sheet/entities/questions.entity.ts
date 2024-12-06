@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, OneToOne } from 'typeorm';
-import { Article } from 'src/article/entities/article.entity';
+import { Article } from '../../article/entities/article.entity';
 import { Answer } from './answers.entity';
 import { SupplementalQuestion } from './supplementalQuestion.entity';
 

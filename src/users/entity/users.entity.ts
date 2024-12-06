@@ -1,6 +1,6 @@
-import { AnswerSheet } from 'src/answer-sheet/entities/answer-sheet.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, OneToOne, JoinColumn } from 'typeorm';
 import { UserProgress } from './user-progress.entity';
+import { AnswerSheet } from '../../answer-sheet/entities/answer-sheet.entity';
 
 @Entity()
 export class User {

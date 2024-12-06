@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Dify } from './dify.entity';
-import { User } from 'src/users/entity/users.entity';
+import { User } from '../users/entity/users.entity';
 import { information } from './dify.dto';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
@@ -23,7 +23,7 @@ export class DifyService {
     }
   private logger = new Logger('DifyService');
   private DIFY_URL: string;
-  @Inject(AuthService) 
+  @Inject(AuthService)
   private readonly authService: AuthService
   constructor(
     private dataSource: DataSource,
@@ -84,8 +84,8 @@ export class DifyService {
 
     // 等待 postData 方法返回结果
     const { conversation_id, answer } = await this.postData(url, body, headers);
-    console.log( conversation_id, answer);
-    
+    console.log(conversation_id, answer);
+
     this.updateUserConversation(conversation_id, user_found)
     // 根据业务需求调整返回值
     return { conversation_id, answer };
@@ -129,15 +129,15 @@ export class DifyService {
     const conversationId = user_found.conversation_id; // 如果 conversation_id 有具体值，请填写在这里
     console.log('找到对应的conversationId', conversationId);
     console.log('1');
-    
-      const url = `${this.DIFY_URL}/v1/messages?user=${username}&conversation_id=${conversationId}&limit=100&first_id=`;
-      const apiKey = await this.getBotKeyByUserId(user.userId); // Replace 'YOUR_API_KEY' with your actual API key
-    console.log('apiKey',apiKey);
-      
+
+    const url = `${this.DIFY_URL}/v1/messages?user=${username}&conversation_id=${conversationId}&limit=100&first_id=`;
+    const apiKey = await this.getBotKeyByUserId(user.userId); // Replace 'YOUR_API_KEY' with your actual API key
+    console.log('apiKey', apiKey);
+
     return this.fetchData(url, apiKey)
   }
   //给获取当前用户的聊天历史记录-执行方法
-  async fetchData(url:string, apiKey:string) {
+  async fetchData(url: string, apiKey: string) {
     return fetch(url, {
       method: 'GET', // 指定请求方法为 GET
       headers: {
@@ -211,10 +211,10 @@ export class DifyService {
   async getArticleName(id: string, userId: number) {
     try {
       console.log('getArticleName');
-      console.log('id',id, 'userId', userId);
+      console.log('id', id, 'userId', userId);
       // You should use await with fetch to handle the promise properly
       const botId = await this.getBotIdByUserId(userId)
-      console.log('botId',botId);
+      console.log('botId', botId);
       const difyUserToken = await this.authService.getCurrentToken()
       const response = await fetch(`${this.DIFY_URL}/console/api/datasets?page=1&ids=${id}`, {
         headers: {
@@ -294,7 +294,7 @@ export class DifyService {
   }
   // 更改机器人使用的知识库
   async changeSourceLibrary(bot_Id: string, switchLibraryId: string) {
-    console.log('bot_IdX',bot_Id);
+    console.log('bot_IdX', bot_Id);
     const url = `${this.DIFY_URL}/console/api/apps/${bot_Id}/model-config`;
     console.log('urlX', url);
     const difyUserToken = await this.authService.getCurrentToken()
@@ -317,7 +317,9 @@ export class DifyService {
           "sec-fetch-site": "same-origin"
         },
         body: JSON.stringify({
-          pre_prompt: "现在你是一个中国小学生的英文阅读理解题目讲解老师，向你提问的用户都是你教授的小学生，请你仅根据提供的英文短文内容以及小学生对你的提问进行题目和语法知识的讲解。\\n但是，需要注意的是，你不能直接为小学生们提供太长的翻译服务（一次最多只能翻译文中一个句子），你需要耐心的告诉他们你只能告诉他们大意不能直接提供打断翻译，因为这样不利于提高孩子们的阅读理水平。",
+          pre_prompt: `现在你是一个中国小学生的英文阅读理解题目讲解老师，向你提问的用户都是你教授的小学生，请你仅根据提供的英文短文内容以及小学生对你的提问进行题目和语法知识的讲解。但是，需要注意的是:
+1. 你不能直接为小学生们提供太长的翻译服务（一次最多只能翻译文中一个句子），你需要耐心的告诉他们你只能告诉他们大意不能直接提供打断翻译，因为这样不利于提高孩子们的阅读理水平。
+          2. 为了便于小学生阅读和理解，你必须回答得言简意赅、格式工整。每次回答得内容中不包含引用原文的部分，尽量不要超过200字；内容比较多或者是有选项的内容的话最好能够另起一行。`,
           prompt_type: "simple",
           chat_prompt_config: {},
           completion_prompt_config: {},

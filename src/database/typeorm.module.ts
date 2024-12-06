@@ -21,6 +21,13 @@ dotenv.config(); // Loads the environment variables from .env file
             username: process.env.DB_USERNAME,
             password: process.env.DB_PASSWORD,
             database: process.env.DB_DATABASE,
+            extra: {
+              max: 20, // 连接池最大连接数
+              idleTimeoutMillis: 30000, // 空闲连接超时
+              connectionTimeoutMillis: 2000
+            },
+            logging: true,
+            logger: 'advanced-console',
             // entities: [User],
             synchronize: true,
             entities: [`${__dirname}/../**/**.entity{.ts,.js}`], // this will automatically load all entity file in the src folder

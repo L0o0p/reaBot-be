@@ -9,7 +9,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { User } from 'src/users/entity/users.entity';
+import { User } from '../users/entity/users.entity';
 import { AuthService, LoginUserDto } from './auth.service';
 import { JwtAuthGuard } from './jwt.guard';
 
@@ -26,7 +26,7 @@ export class AuthController {
   async getToken() {
     try {
       const tokens = await this.usersService.loginAndGetTokens();
-      console.log('XX',tokens);  // 这里会显示 accessToken, refreshToken 和 expiresIn
+      console.log('XX', tokens);  // 这里会显示 accessToken, refreshToken 和 expiresIn
       const refreshToken = tokens.refreshToken
       const accessToken = tokens.accessToken
       return { accessToken };

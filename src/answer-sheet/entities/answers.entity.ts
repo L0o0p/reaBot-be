@@ -13,6 +13,9 @@ export class Answer {
   @Column()
   isCorrect: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  ifTracking: boolean;
+  
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: Date;
 

@@ -17,6 +17,14 @@ import { TextPreprocessorService } from './upload.service';
 interface QuestionItem {
   question: string;
   options: string[];
+  id: number;
+  correctAnswer: string;
+  explanation: string;
+  score: number;
+  f_Question: string;
+  f_Options: string[];
+  f_correctAnswer: string;
+  articleId: number
 }
 @UseGuards(JwtAuthGuard)
 @Controller('article')
@@ -339,7 +347,19 @@ export class ArticleController {
     const article_id = (await this.getUserById(title)).id
 
     const articleQuestions: QuestionItem[] = await this.appService.getQuestionsByArticleID(article_id)
-    return articleQuestions;
+    // 把跟踪题提出来
+    let trackingQuestions = []
+    for (let i = 0; i < articleQuestions.length; i++) {
+      const a = {
+        id: (articleQuestions[i] as QuestionItem).id,
+        articleId: articleQuestions[i].articleId,
+        question: articleQuestions[i].question,
+        options: articleQuestions[i].f_Options,
+        correctAnswer: articleQuestions[i].f_correctAnswer
+      }
+      trackingQuestions.push(a)
+    }
+    return { articleQuestions, trackingQuestions };
   }
 
   @Get('get/progress')
@@ -419,8 +439,8 @@ export class ArticleController {
     )
     console.log('procceedQustions', procceedQustions);
 
- 
- 
+
+
     return procceedF_Qustions
   }
 
