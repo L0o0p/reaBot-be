@@ -102,7 +102,7 @@ export class ArticleService {
     return await this.articleRepository.findOne({ where: { title } });
   }
 
-    // 根据文章名搜索
+  // 根据文章名搜索
   async findByArticleId(id): Promise<CreateArticle | undefined> {
     return await this.articleRepository.findOne({ where: { id } });
   }
@@ -144,7 +144,7 @@ export class ArticleService {
       );
     }
   }
-  
+
   // 查询指定文章doc
   async getArticleDocByTitle(title: string) {
     const getDocFilesByArticleTitle = async (title: string) => {
@@ -212,15 +212,15 @@ export class ArticleService {
     }
   }
   // 获取dify知识库文档列表
-  async fetchDifyLibraryFiles(bot_id:string) {
+  async fetchDifyLibraryFiles(bot_id: string) {
     const datasets = (await this.chatService.fetchBotInfo(bot_id)).model_config.dataset_configs.datasets.datasets
     const dataset_id = datasets[0].dataset.id//<英文短文> 知识库的id
     const url = `${this.DIFY_URL}/v1/datasets/${dataset_id}/documents`
     const apiKey = this.difyDatabaseKey//知识库的key
-    console.log('dataset_id',dataset_id);
-    console.log('url',url);
-    console.log('apiKey',apiKey);
-    
+    console.log('dataset_id', dataset_id);
+    console.log('url', url);
+    console.log('apiKey', apiKey);
+
     try {
       // 使用 fetch 发送 GET 请求
       const response = await fetch(url, {
@@ -237,7 +237,7 @@ export class ArticleService {
 
       // 解析 JSON 数据
       const data = await response.json(); //完整数据
-      console.log('dataX',data);
+      console.log('dataX', data);
       const data_name = data.data[0].data_source_detail_dict.upload_file.name //所求文档名字
       return data_name
     } catch (error) {
@@ -248,12 +248,12 @@ export class ArticleService {
     }
   }
   // 从dify知识库文档列表获取(名字 -> 本地搜索获取)文档文本{name,content}
-  async getPropertyArticle( userId:number ) {
+  async getPropertyArticle(userId: number) {
     const botId = (await this.userService.getBotIdByUserId(userId)).bot_id;
-    console.log( 'botIdX', botId);
+    console.log('botIdX', botId);
     const articleName = await this.fetchDifyLibraryFiles(botId)
-    console.log( 'articleNameX', articleName);
-    
+    console.log('articleNameX', articleName);
+
     const article_name = articleName.split('.')[0];
     const propertyArticle = this.getArticleByTitle(article_name)
     return propertyArticle
@@ -263,7 +263,7 @@ export class ArticleService {
     const url = `${this.DIFY_URL}/v1/datasets`
 
     const options = {
-      method: 'POST', 
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.difyDatabaseKey}`,
         'Content-Type': 'application/json'
@@ -285,9 +285,9 @@ export class ArticleService {
       throw error; // 重新抛出错误允许调用者处理它
     }
   }
-  
+
   // 在给定id的知识库中创建新文档
-  async createLibraryArticle(id: string, createArticleDto: CreateArticle) {
+  async createLibraryText(id: string, createArticleDto: CreateArticle) {
     const datasetId = id; // Replace {dataset_id} with your actual dataset ID
     const apiKey = this.difyDatabaseKey; // Replace {api_key} with your actual API key
     const rootUrl = `${this.DIFY_URL}/v1`
@@ -335,7 +335,7 @@ export class ArticleService {
   //   }
   // }
 
-  // 通过接收前端的doc文档创建dify知识库
+  // 通过接收前端的doc文档创建dify知识库中的文档
   async createLibraryByDoc(file: Express.Multer.File, id: string) {
     const datasetId = id
     const apiKey = this.difyDatabaseKey;
@@ -395,7 +395,7 @@ export class ArticleService {
     }
   }
   //接收前端doc文档并存储在本地数据库
-  async save_articleFile(file: Express.Multer.File, id: string, tag: string, rawText:string): Promise<File> {
+  async save_articleFile(file: Express.Multer.File, id: string, tag: string, rawText: string): Promise<File> {
     const match_article = file.originalname.split('.')[0]; // 用doc名称命名
     console.log('match_article:', match_article);
     let existArticle = await this.findByArticleTitle(match_article);
@@ -463,7 +463,7 @@ export class ArticleService {
     const document = await this.docFileRepository.findOne({ where: { name, tag } });
     if (document && document.content) {
       const result = await mammoth.extractRawText({ buffer: Buffer.from(document.content) });
-      const  rawText = result.value;
+      const rawText = result.value;
       console.log('Document found', rawText);
       const splitStringByNewLine = (input: string): string[] => {
         // 使用正则表达式来同时匹配 \n 和 \r\n
@@ -478,75 +478,75 @@ export class ArticleService {
     }
   }
 
-  async convertLettersToNumbers(array:string[]) {
+  async convertLettersToNumbers(array: string[]) {
     // 定义转换规则，每个字母对应一个数字
     const mapping = {
-        'A': 0,
-        'B': 1,
-        'C': 2,
-        'D': 3
+      'A': 0,
+      'B': 1,
+      'C': 2,
+      'D': 3
     };
 
     // 使用 map 方法通过查找 mapping 对象来转换数组中的每个元素
     return array.map(item => mapping[item]);
   }
-  
+
   async getQuestionsByArticleID(article_id: number) {
     const questions = await this.questionRepository.find({ where: { articleId: article_id } });
     console.log('questions', questions);
     return questions
   }
 
-  async getLibraryId(articleId:number): Promise<string> {
+  async getLibraryId(articleId: number): Promise<string> {
     return await this.articleRepository.findOne({ where: { articleId: articleId } })
   }
 
   async getAnswersByArticleId(articleId: number): Promise<Answer[]> {
-        // Fetch all questions linked to the article
-        const questions = await this.questionRepository.find({
-            where: { article: { id: articleId } },
-            relations: ['answers'],
-        });
+    // Fetch all questions linked to the article
+    const questions = await this.questionRepository.find({
+      where: { article: { id: articleId } },
+      relations: ['answers'],
+    });
 
-        // Flatten the answers array from each question
-        const answers = questions.reduce((acc, question) => [...acc, ...question.answers], []);
+    // Flatten the answers array from each question
+    const answers = questions.reduce((acc, question) => [...acc, ...question.answers], []);
 
-        return answers;
+    return answers;
   }
-  
+
   async getLatestAnswerRank(articleId: number): Promise<{ answerId: number; questionId: number; rank: number }> {
-        // Fetch all questions linked to the article with their answers
-        const questions = await this.questionRepository.find({
-            where: { article: { id: articleId } },
-            relations: ['answers'],
-        });
+    // Fetch all questions linked to the article with their answers
+    const questions = await this.questionRepository.find({
+      where: { article: { id: articleId } },
+      relations: ['answers'],
+    });
 
-        // Find all answers for filtering later
-        let maxAnswerId = -1;
-        let correspondingQuestion: Question | null = null;
+    // Find all answers for filtering later
+    let maxAnswerId = -1;
+    let correspondingQuestion: Question | null = null;
 
-        // Iterate over each question and its answers to find the answer with the maximum ID
-        questions.forEach(question => {
-            const latestAnswerInQuestion = question.answers.reduce((max, current) =>
-                current.id > max.id ? current : max, { id: -1 }
-            );
-            if (latestAnswerInQuestion.id > maxAnswerId) {
-                maxAnswerId = latestAnswerInQuestion.id;
-                correspondingQuestion = question;
-            }
-        });
+    // Iterate over each question and its answers to find the answer with the maximum ID
+    questions.forEach(question => {
+      const latestAnswerInQuestion = question.answers.reduce((max, current) =>
+        current.id > max.id ? current : max, { id: -1 }
+      );
+      if (latestAnswerInQuestion.id > maxAnswerId) {
+        maxAnswerId = latestAnswerInQuestion.id;
+        correspondingQuestion = question;
+      }
+    });
 
-        // Determine the rank of the corresponding question
-        const sortedQuestions = questions.sort((a, b) => a.id - b.id);
-        const queryRank = sortedQuestions.indexOf(correspondingQuestion!) + 1; // Ranks start from 1
+    // Determine the rank of the corresponding question
+    const sortedQuestions = questions.sort((a, b) => a.id - b.id);
+    const queryRank = sortedQuestions.indexOf(correspondingQuestion!) + 1; // Ranks start from 1
 
-        if (correspondingQuestion && maxAnswerId !== -1) {
-            return { answerId: maxAnswerId, questionId: correspondingQuestion.id, rank: queryRank };
-        } else {
-            throw new Error('No answers found for the article');
-        }
+    if (correspondingQuestion && maxAnswerId !== -1) {
+      return { answerId: maxAnswerId, questionId: correspondingQuestion.id, rank: queryRank };
+    } else {
+      throw new Error('No answers found for the article');
+    }
   }
-  
+
   async getQuestionsWithAnswers(articleBId: number): Promise<any[]> {
     // Fetch the article with its associated questions and answers
     return this.articleRepository.findOne({

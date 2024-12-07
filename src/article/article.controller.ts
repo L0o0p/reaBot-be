@@ -202,7 +202,7 @@ export class ArticleController {
     const data = await this.appService.createLibrary(article.title) // 使用上传内容创建空知识库
     const id = data.id // 新知识库的id
     console.log('id', id);
-    const document_data = await this.appService.createLibraryArticle(id, article)// 在刚创建的知识库中创建文本
+    const document_data = await this.appService.createLibraryText(id, article)// 在刚创建的知识库中创建文本
     const result = this.appService.register(article, id);// 在本地备份知识库中的文本（要写入知识库id）
     return result
   }
@@ -419,6 +419,10 @@ export class ArticleController {
     // 将doc内容中的「练习题目」「阅读文章」「跟踪练习」分开
     const procceedText = await this.uploadService.processText(rawText)
     console.log('procceedText', procceedText);
+
+    // 上传问题和答案到dify
+    const uploadQuestionsAndAnswersToDify = await this.uploadService.uploadQuestionsAndAnswersToDify(procceedText.questionsText, procceedText.trackingQuestionsText, id)
+    console.log('uploadQuestionsAndAnswersToDify', uploadQuestionsAndAnswersToDify);
 
     // 「练习题目」进行处理并存储
     const articleTitle = file.originalname.split('.')[0];

@@ -118,7 +118,7 @@ export class AnswerSheetController {
     // console.log( 'additionalExercises', additionalExercises);
 
     const questionString = question.question + question.options.join()
-    const info = `对于这道题${questionString}，请根据文章内容给我150字以内的答案解析，帮助我理解和进步`
+    const info = `对于这道题${questionString}，请根据文章内容，并严格依照本文的「练习题目」的答案和解析，给我150字以内的答案解析，帮助我理解和进步`
     console.log('req.user', req.user);
 
     const answerAnalysis = await this.chatService.sendInfo(info, req.user, true) || {

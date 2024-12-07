@@ -26,10 +26,6 @@ export class TextPreprocessorService {
         this.questionRepository = this.dataSource.getRepository(Question);
     }
 
-    test(text: string) {
-        console.log(text);
-        return text
-    }
 
     async processText(text: string) {
         // 使用 split 方法根据关键词将文本分成三个部分
@@ -196,10 +192,12 @@ export class TextPreprocessorService {
                 quizQuestion.explanation = explanation;
                 quizQuestion.score = 1;
                 quizQuestion.articleId = articleId;
+                savedQuestions.push(quizQuestion);
                 const savedQuestion = await this.questionRepository.save(quizQuestion);
                 savedQuestions.push(savedQuestion);
             }
             console.log('savedQuestions', savedQuestions);
+            return savedQuestions
         }
     }
     async processFQuestions(trackingQuestionsText: string) {
@@ -227,9 +225,24 @@ export class TextPreprocessorService {
         return savedQuestions
     }
 
+    async uploadQuestionsAndAnswersToDify(questionsText: string, trackingQuestionsText: string, id: string) {
+        // 拿到文件中除了文章本身的部分
+        const text = {
+            title: 'Questions, Answers And Explantions',
+            content: '「练习题目」及其答案和解析' + '\n' + questionsText + '\n' + '\n' + '「跟踪练习」及其答案和解析' + '\n' + trackingQuestionsText,
+        }
+        // 上传文档到指定知识库
+        const result = await this.articleService.createLibraryText(id, text)
+        // 返回上传结果
+        console.log('resultX', result);
+        return result
+    }
+
     getTrackingQuestions(): Question[] {
         return this.trackingQuestions;
     }
+
+
 }
 function getTextAfterFirstNewline(text) {
     const index = text.indexOf('\n');
