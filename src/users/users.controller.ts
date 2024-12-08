@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AnswerSheetService } from 'src/answer-sheet/answer-sheet.service';
 import { ArticleService } from 'src/article/article.service';
 import { PaperService } from 'src/article/paper.service';
+import { NewBotInfointerface, User } from './user.dto';
 
 export interface CreateBot {
   name: string,
@@ -30,15 +31,9 @@ export class UsersController {
 
   ) { }
 
-  @Get('lateAnswerSheet')
-  async findLatestAnswerSheet(): Promise<AnswerSheet | undefined> {
-    const userId: number = 1
-    return await this.answerSheetService.findLatestAnswerSheet(userId)
-  }
-
   @Post('create')
   //   handles the post request to /users/create endpoint to create new user
-  async signUp(@Body() user: CreateUser) {
+  async signUp(@Body() user: CreateUser): Promise<User> {
     // 创建新的机器人
     const botSettings: CreateBot = {
       name: user.username,
@@ -50,7 +45,7 @@ export class UsersController {
     }
     console.log('botSettings', botSettings);
 
-    const newBot = await this.userService.createBot(botSettings)
+    const newBot: NewBotInfointerface = await this.userService.createBot(botSettings)
     console.log('newBot', newBot);
 
     // 获取并且存储机器人的key
@@ -68,26 +63,13 @@ export class UsersController {
     // const newProgress = await this.userService.createUserProgress(newUser);
     return newUser
   }
-  @Get('test')
-  //   handles the post request to /users/create endpoint to create new user
-  async test() {
-    return await this.paperService.findNextMinId(2)
-  }
-
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   //   handles the post request to /users/create endpoint to create new user
-  async gerProfile(@Req() req: any) {
+  async gerProfile(@Req() req: any): Promise<User> {
     console.log(req.user.user);
     return await this.userService.findByUsername(req.user.username);
-  }
-
-  @Post('createBot')
-  //   handles the post request to /users/create endpoint to create new user
-  async createBot(@Body() botSettings: CreateBot) {
-    // 创建新的进度记录，链接到新注册的用户
-    return await this.userService.createBot(botSettings)
   }
 
 

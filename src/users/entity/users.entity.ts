@@ -1,5 +1,4 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, OneToOne, JoinColumn } from 'typeorm';
-import { UserProgress } from './user-progress.entity';
 import { AnswerSheet } from '../../answer-sheet/entities/answer-sheet.entity';
 
 @Entity()
@@ -28,7 +27,4 @@ export class User {
   @OneToMany(() => AnswerSheet, answerSheet => answerSheet.user)
   answerSheets: AnswerSheet[];
 
-  @OneToOne(() => UserProgress, progress => progress.user)
-  @JoinColumn()
-  progress: UserProgress;
 }

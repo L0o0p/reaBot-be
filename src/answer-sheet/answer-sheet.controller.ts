@@ -20,14 +20,6 @@ export class AnswerSheetController {
     private readonly chatService: DifyService,
     @InjectRepository(Question)
     private questionRepository: Repository<Question>,
-    // @InjectRepository(SupplementalQuestion)
-    // private supplementalQuestion: Repository<SupplementalQuestion>,
-    // @InjectRepository(AnswerSheet)
-    // private answerSheetRepository: Repository<AnswerSheet>,
-    // @InjectRepository(Paper)
-    // private paperRepository: Repository<Paper>,
-    // @InjectRepository(Answer)
-    // private answerRepository: Repository<Answer>
   ) { }
 
   @Post('submit')
@@ -41,7 +33,7 @@ export class AnswerSheetController {
         username: string;
       }
     }
-  ) {
+  ): Promise<AnswerSubmitResult> {
     console.log('receviedAnswer:', body.answer);
     console.log('body:', body);
     console.log('req', req.user);
@@ -101,7 +93,7 @@ export class AnswerSheetController {
         username: string;
       }
     }
-  ) {
+  ): Promise<AnalyzeResult | { answer: string; }> {
     // const answerList: number[] = [2, 1, 2, 0, 3] // 从数据表拉取正确答案（传入「题号」questionIndex、「当前文章id」ariticle_id)
     const questionIndex: number = body.questionIndex
     // const correctAnswer: number = answerList[questionIndex];
@@ -124,6 +116,9 @@ export class AnswerSheetController {
     const answerAnalysis = await this.chatService.sendInfo(info, req.user, true) || {
       answer: '答案解析：回答错误 ⛽️ 再接再厉'
     }
+
+    // 尝试把原解析塞入ai回答中？
+
     // const answerAnalysis = (await this.chatService.sendInfo({ information: info }, req.user)).answer;//return { conversation_id, answer };
     // console.log( 'answerAnalysis', answerAnalysis);
 
@@ -140,61 +135,6 @@ export class AnswerSheetController {
     return answerAnalysis
   }
 
-  @Post('tttest')
-  async Test(
-    @Body() body: { answer: number, questionIndex: number },
-    @Req() req: {
-      user: {
-        id: number;
-        userId: number;
-        username: string;
-      }
-    }
-  ) {
-    console.log('receviedAnswer:', body.answer);
-    console.log('body:', body);
-    console.log(req.user.userId);
-
-    // 从当前知识库知道当前正在做的文章
-    const articleId = (await this.articleService.getPropertyArticle(req.user.userId)).id
-    console.log('articleIdX', articleId);
-
-    // // 1. 从知识库获取此题正确答案
-    // const matchQuestions = (await this.questionRepository.find({ where: { articleId: articleId } }))
-    // const matchQuestion = matchQuestions[body.questionIndex]
-    // const correctAnswer = matchQuestion.correctAnswer// 正确答案
-    // console.log('对应跟踪题', matchQuestion);
-    const answerList: number[] = [2, 1, 2, 0, 3] // 从数据表拉取正确答案（传入「题号」questionIndex、「当前文章id」ariticle_id)
-    const questionIndex: number = body.questionIndex
-    const correctAnswer: number = answerList[questionIndex];
-    console.log('correctAnswer', correctAnswer);
-    // 录入用户答案及其正答情况
-
-    // 2. 判断用户答案是否正确
-    const isCorrect = (Number(body.answer) == Number(correctAnswer))
-    console.log('isCorrect', isCorrect);
-    const questionID = (await this.questionRepository.find({ where: { articleId: articleId } }))[questionIndex].id
-    console.log('questionID', questionID);
-
-    // 3. 录入用户答案及其正答情况（无论对错）
-    await this.answerSheetService.recordUserAnswer(
-      body.answer,
-      isCorrect,
-      questionID, //这里是题号，从1开始计数，但是要传入的是questionid，应该是根据articleid和questionindex来找到这道题本身的id:
-      articleId,
-      req.user.userId
-    )
-    let returnBack = `提交了文章${articleId}的 - 第${questionIndex}题 -正确答案是${correctAnswer}，你的答案是${body.answer},所判断为${isCorrect ? '正确' : '错误'}`
-    if (isCorrect) {
-      console.log('Correct');
-      return returnBack
-    } else {
-      // 4. 如果答错
-      console.log('Wrong');
-      return returnBack
-    }
-  }
-
   @Post('submitSupplemental')
   // @UseGuards(AuthGuard('jwt'))
   async submiSsubmitSupplementalAnswer(
@@ -206,7 +146,7 @@ export class AnswerSheetController {
         username: string;
       }
     }
-  ) {
+  ): Promise<boolean> {
     console.log('receviedAnswer:', body.answer);
     console.log('body:', body);
     console.log(req.user.userId);
@@ -257,7 +197,7 @@ export class AnswerSheetController {
       userId: number;
       username: string;
     }
-  }) {
+  }): Promise<PaperReadingTimeFullInfo | PaperReadingTime> {
     const nextPaper = await this.paperService.getNextPaper(req.user.userId);
     const paperId = nextPaper.id;
 

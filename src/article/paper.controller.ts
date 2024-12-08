@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, InternalServerErrorException, Param, Post, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ArticleService } from './article.service';
-import { CreateArticle, CreatePaper } from './article.dto';
 import { Article } from './entities/article.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -15,6 +14,9 @@ import { Question } from 'src/answer-sheet/entities/questions.entity';
 import { AnswerSheet } from '../answer-sheet/entities/answer-sheet.entity';
 import { Answer } from 'src/answer-sheet/entities/answers.entity';
 import { UsersService } from 'src/users/users.service';
+import { CreatePaper } from './dto/article.dto';
+import { CurrentPaper, LatestArticle, nextPaperResult, PaperProps, Progress } from './dto/paper.dto';
+import { newPaper } from './dto/paper.dto';
 
 
 @UseGuards(JwtAuthGuard)
@@ -55,13 +57,13 @@ export class PaperController {
         }
         console.log('初次验证通过');
         // 调用paperService的createPaper方法
-        const paper = await this.paperService.createPaper(articleA_title, articleB_title);
-        return createArticleDto;
+        const paper: PaperProps = await this.paperService.createPaper(articleA_title, articleB_title);
+        return paper;
     }
 
     // 获取所有paper
     @Get('all')
-    async getAllPaper() {
+    async getAllPaper(): Promise<PaperProps[]> {
         const allPaper = await this.paperService.getAllPaper();
 
         // 使用 Promise.all 来等待所有异步操作完成
@@ -84,7 +86,7 @@ export class PaperController {
     }
 
     @Get('getPaperById/:id')
-    async getPaperById(@Param('id') id: number): Promise<any> {
+    async getPaperById(@Param('id') id: number): Promise<newPaper> {
         // 拿到paper对象
         const paper = await this.paperService.getPaperById(id);
         // 从对象获取title
@@ -127,11 +129,15 @@ export class PaperController {
                 username: string;
             }
         }
-    ) {
+    ): Promise<{
+        currentPaper: CurrentPaper;
+        progress: Progress;
+        lastestArticle: LatestArticle;
+    }> {
         const userId = req.user.userId;
         console.log('req.user.userId', userId);
 
-        const lastArticle = await this.paperService.getProgress(userId);
+        const lastestArticle: LatestArticle = await this.paperService.getProgress(userId);
 
         // 初始化默认的进度
         let progress = {
@@ -139,11 +145,11 @@ export class PaperController {
             currentQuestionNum: null
         };
 
-        // 检查 lastArticle 是否存在并且有有效的属性
-        if (lastArticle && lastArticle.currentArticleKey !== undefined && lastArticle.currentQuestionNum !== undefined) {
+        // 检查 lastestArticle 是否存在并且有有效的属性
+        if (lastestArticle && lastestArticle.currentArticleKey !== undefined && lastestArticle.currentQuestionNum !== undefined) {
             progress = {
-                currentArticleKey: lastArticle.currentArticleKey,
-                currentQuestionNum: lastArticle.currentQuestionNum
+                currentArticleKey: lastestArticle.currentArticleKey,
+                currentQuestionNum: lastestArticle.currentQuestionNum
             };
         } else {
             progress = {
@@ -151,34 +157,34 @@ export class PaperController {
                 currentQuestionNum: 0
             };
         }
-        console.log('lastArticle', lastArticle);
+        console.log('lastestArticle', lastestArticle);
 
         const currentPaper = await this.paperService.getCurrentPaper(userId);
-        return { currentPaper, progress, lastArticle };
+        return { currentPaper, progress, lastestArticle };
     }
 
 
-    @Get('timeCalculation')
-    async timeCalculation(
-        @Req() req: {
-            user: {
-                id: number;
-                userId: number;
-                username: string;
-            }
-        }
-    ) {
-        try {
-            const userId = req.user.userId;
-            // 计算刚做完这篇文章的阅读时间
-            const timeToken = await this.paperService.estimateTime(userId);
-            // 阅读时间入库
+    // @Get('timeCalculation')
+    // async timeCalculation(
+    //     @Req() req: {
+    //         user: {
+    //             id: number;
+    //             userId: number;
+    //             username: string;
+    //         }
+    //     }
+    // ) {
+    //     try {
+    //         const userId = req.user.userId;
+    //         // 计算刚做完这篇文章的阅读时间
+    //         const timeToken = await this.paperService.estimateTime(userId);
+    //         // 阅读时间入库
 
-            return timeToken
-        } catch (error) {
-            // res.status(500).json({ error: error.message });
-        }
-    }
+    //         return timeToken
+    //     } catch (error) {
+    //         // res.status(500).json({ error: error.message });
+    //     }
+    // }
 
     //修改机器人使用的知识库(使用标题)
     @Get('/nextPaper')
@@ -191,7 +197,7 @@ export class PaperController {
                 username: string;
             }
         }
-    ) {
+    ): Promise<nextPaperResult> {
         // 接收请求 查询即将开始的试卷
         const nextPaper = await this.paperService.getNextPaper(req.user.userId);
 
@@ -255,7 +261,7 @@ export class PaperController {
                 title: articleB_title,
                 content: articleB_Text,
             },
-            result: result
+            result: result as boolean
         }
         return feedback
     }
@@ -269,7 +275,7 @@ export class PaperController {
                 username: string;
             }
         }
-    ) {
+    ): Promise<number> {
         // 知道现在的article ⬇️
         const currentArticle_id = (await this.articleService.getPropertyArticle(req.user.userId)).id
         console.log('currentArticle_id', currentArticle_id);

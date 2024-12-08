@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { DataSource, getRepository, Repository } from 'typeorm';
 import { Article } from './entities/article.entity';
-import { CreateArticle } from './article.dto';
 import { response } from 'express';
 // import { log } from 'console';
 import { DifyService } from 'src/chat/dify.service';
@@ -23,6 +22,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from 'src/answer-sheet/entities/questions.entity';
 import { Answer } from 'src/answer-sheet/entities/answers.entity';
 import { UsersService } from 'src/users/users.service';
+import { CreateArticle } from './dto/article.dto';
 interface MammothMessage {
   type: string; // 'error' | 'warning' 等
   message: string;
@@ -213,8 +213,10 @@ export class ArticleService {
   }
   // 获取dify知识库文档列表
   async fetchDifyLibraryFiles(bot_id: string) {
-    const datasets = (await this.chatService.fetchBotInfo(bot_id)).model_config.dataset_configs.datasets.datasets
-    const dataset_id = datasets[0].dataset.id//<英文短文> 知识库的id
+    const datasets = await this.chatService.fetchBotInfo(bot_id)
+    console.log('datasetsX', datasets);
+    const datasetsConfig = datasets.model_config.dataset_configs.datasets.datasets
+    const dataset_id = datasetsConfig[0].dataset.id//<英文短文> 知识库的id
     const url = `${this.DIFY_URL}/v1/datasets/${dataset_id}/documents`
     const apiKey = this.difyDatabaseKey//知识库的key
     console.log('dataset_id', dataset_id);
@@ -237,8 +239,10 @@ export class ArticleService {
 
       // 解析 JSON 数据
       const data = await response.json(); //完整数据
-      console.log('dataX', data);
-      const data_name = data.data[0].data_source_detail_dict.upload_file.name //所求文档名字
+      console.log('dataXX', data);
+      const data_name = data.data[1].data_source_detail_dict.upload_file.name //所求文档名字
+      console.log( 'data_nameZZ', data_name);
+      
       return data_name
     } catch (error) {
       console.error('There was an error!', error);

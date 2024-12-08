@@ -82,7 +82,7 @@ export class TextPreprocessorService {
         // 3. 储存到本地
         const tag = "article"
         // processedText,
-        this.articleService.save_articleFile(file, datasetId, tag, savableData);
+        await this.articleService.save_articleFile(file, datasetId, tag, savableData);
 
         const finishText = 'Article have been saved'
         console.log(finishText);
@@ -140,7 +140,12 @@ export class TextPreprocessorService {
     async processQuestions(questionsText: string, procceedF_Qustions: Question[], articleId: number) {
         const chunks: string[] = questionsText.split('\n\n\n'); // 分开每个「问题块」
         const savedQuestions: Question[] = [];
-
+        
+        if (chunks.length === 0) {
+            console.log("chunks长度为0");
+            return savedQuestions;
+        }
+        const promises = [];
         for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
 
@@ -192,12 +197,11 @@ export class TextPreprocessorService {
                 quizQuestion.explanation = explanation;
                 quizQuestion.score = 1;
                 quizQuestion.articleId = articleId;
-                savedQuestions.push(quizQuestion);
                 const savedQuestion = await this.questionRepository.save(quizQuestion);
                 savedQuestions.push(savedQuestion);
             }
+            await Promise.all(promises);
             console.log('savedQuestions', savedQuestions);
-            return savedQuestions
         }
     }
     async processFQuestions(trackingQuestionsText: string) {

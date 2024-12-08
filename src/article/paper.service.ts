@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { DataSource, getRepository, In, Repository, Timestamp } from 'typeorm';
 import { Article } from './entities/article.entity';
-import { CreateArticle, CreatePaper } from './article.dto';
 import { response } from 'express';
 import { log } from 'console';
 import { DifyService } from 'src/chat/dify.service';

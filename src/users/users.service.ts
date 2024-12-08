@@ -10,7 +10,6 @@ import {
 import { DataSource } from 'typeorm';
 import { User } from './entity/users.entity';
 import * as bcrypt from 'bcryptjs';
-import { UserProgress } from './entity/user-progress.entity';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from 'src/auth/auth.service';
 
@@ -41,7 +40,6 @@ export class UsersService {
     private authService: AuthService
   ) {
     // get users table repository to interact with the database
-    this.userProgressRepository = this.dataSource.getRepository(UserProgress);
     this.userRepository = this.dataSource.getRepository(User);
     this.DIFY_URL = this.configService.get<string>('DIFY_URL');
   }
@@ -75,12 +73,6 @@ export class UsersService {
   // 根据用户名搜索
   async findByUsername(username: string): Promise<User | undefined> {
     return await this.userRepository.findOne({ where: { username } });
-  }
-
-  async createUserProgress(user: User): Promise<UserProgress> {
-    const newProgress = new UserProgress();
-    newProgress.user = user;
-    return this.userProgressRepository.save(newProgress);
   }
 
   async createBot(CreateBot: CreateBot) {

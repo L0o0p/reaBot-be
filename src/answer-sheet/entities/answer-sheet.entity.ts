@@ -45,7 +45,7 @@ export class AnswerSheet {
   @Column("text", { nullable: true })
   articleBTimeToken: string;
 
-  @Index('idx_paper_user_unique', ['paper', 'user'], { unique: true })
+  // @Index('idx_paper_user_unique', ['paper', 'user'], { unique: true })
   @ManyToOne(() => Paper, paper => paper.answerSheets)
   paper: Paper;
 

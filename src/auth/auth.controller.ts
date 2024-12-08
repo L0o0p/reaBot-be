@@ -17,13 +17,15 @@ import { JwtAuthGuard } from './jwt.guard';
 export class AuthController {
   constructor(private readonly usersService: AuthService) { }
 
+  // 在dify_user_token_config.json文件中获取当前的DIFY_USER_TOKEN
   @Get('getCurrentToken')
-  async getCurrentToken() {
+  async getCurrentToken(): Promise<string> {
     return await this.usersService.getCurrentToken();
   }
 
+  // 请求并定时从新请求difytoken并且存入dify_user_token_config.json文件中
   @Post('getToken')
-  async getToken() {
+  async getToken(): Promise<{ accessToken: string }> {
     try {
       const tokens = await this.usersService.loginAndGetTokens();
       console.log('XX', tokens);  // 这里会显示 accessToken, refreshToken 和 expiresIn
@@ -58,7 +60,10 @@ export class AuthController {
   }
   // 用户登录
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto,) {
+  async login(@Body() loginUserDto: LoginUserDto,): Promise<{
+    userId: number,
+    token: string
+  }> {
     return this.usersService.login(loginUserDto);
   }
 }
