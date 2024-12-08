@@ -26,10 +26,6 @@ export class TextPreprocessorService {
         this.questionRepository = this.dataSource.getRepository(Question);
     }
 
-    test(text: string) {
-        console.log(text);
-        return text
-    }
 
     async processText(text: string) {
         // 使用 split 方法根据关键词将文本分成三个部分
@@ -86,7 +82,7 @@ export class TextPreprocessorService {
         // 3. 储存到本地
         const tag = "article"
         // processedText,
-        this.articleService.save_articleFile(file, datasetId, tag, savableData);
+        await this.articleService.save_articleFile(file, datasetId, tag, savableData);
 
         const finishText = 'Article have been saved'
         console.log(finishText);
@@ -144,7 +140,12 @@ export class TextPreprocessorService {
     async processQuestions(questionsText: string, procceedF_Qustions: Question[], articleId: number) {
         const chunks: string[] = questionsText.split('\n\n\n'); // 分开每个「问题块」
         const savedQuestions: Question[] = [];
-
+        
+        if (chunks.length === 0) {
+            console.log("chunks长度为0");
+            return savedQuestions;
+        }
+        const promises = [];
         for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
 
@@ -199,6 +200,7 @@ export class TextPreprocessorService {
                 const savedQuestion = await this.questionRepository.save(quizQuestion);
                 savedQuestions.push(savedQuestion);
             }
+            await Promise.all(promises);
             console.log('savedQuestions', savedQuestions);
         }
     }
@@ -227,9 +229,24 @@ export class TextPreprocessorService {
         return savedQuestions
     }
 
+    async uploadQuestionsAndAnswersToDify(questionsText: string, trackingQuestionsText: string, id: string) {
+        // 拿到文件中除了文章本身的部分
+        const text = {
+            title: 'Questions, Answers And Explantions',
+            content: '「练习题目」及其答案和解析' + '\n' + questionsText + '\n' + '\n' + '「跟踪练习」及其答案和解析' + '\n' + trackingQuestionsText,
+        }
+        // 上传文档到指定知识库
+        const result = await this.articleService.createLibraryText(id, text)
+        // 返回上传结果
+        console.log('resultX', result);
+        return result
+    }
+
     getTrackingQuestions(): Question[] {
         return this.trackingQuestions;
     }
+
+
 }
 function getTextAfterFirstNewline(text) {
     const index = text.indexOf('\n');

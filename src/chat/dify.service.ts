@@ -245,8 +245,8 @@ export class DifyService {
       // Parse the JSON from the response
       const data = await response.json();
       console.log('data.data[0]', data);
-      const title = data.data[0].name
-      const library_id = data.data[0].id
+      const title = data.data[1].name
+      const library_id = data.data[1].id
       return { title, library_id }
     } catch (error) {
       console.error('There was an error!', error);
@@ -256,6 +256,8 @@ export class DifyService {
   async fetchBotInfo(bot_id: string) {
     try {
       const difyUserToken = await this.authService.getCurrentToken()
+      console.log('difyUserToken', difyUserToken);
+      
       // You should use await with fetch to handle the promise properly
       const response = await fetch(`${this.DIFY_URL}/console/api/apps/${bot_id}`, {
         headers: {
@@ -319,7 +321,8 @@ export class DifyService {
         body: JSON.stringify({
           pre_prompt: `现在你是一个中国小学生的英文阅读理解题目讲解老师，向你提问的用户都是你教授的小学生，请你仅根据提供的英文短文内容以及小学生对你的提问进行题目和语法知识的讲解。但是，需要注意的是:
 1. 你不能直接为小学生们提供太长的翻译服务（一次最多只能翻译文中一个句子），你需要耐心的告诉他们你只能告诉他们大意不能直接提供打断翻译，因为这样不利于提高孩子们的阅读理水平。
-          2. 为了便于小学生阅读和理解，你必须回答得言简意赅、格式工整。每次回答得内容中不包含引用原文的部分，尽量不要超过200字；内容比较多或者是有选项的内容的话最好能够另起一行。`,
+2. 为了便于小学生阅读和理解，你必须回答得言简意赅、格式工整。每次回答得内容尽量不要超过200字，内容比较多或者是有选项的内容的话最好能够另起一行。
+3. 如果学生向你提出「原文依据」或者「在原文哪里可以找到答案」之类的问题，请尽可能给出原文。`,
           prompt_type: "simple",
           chat_prompt_config: {},
           completion_prompt_config: {},

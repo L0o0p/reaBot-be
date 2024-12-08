@@ -16,10 +16,6 @@ export class Article {
   @Column({ nullable: true })
   library_id: string;
 
-  // 添加 tips 字段
-  @Column({ type: 'json', nullable: true })
-  tips: string[];
-
   @OneToMany(() => Question, question => question.article)
   questions: Question[];
 
