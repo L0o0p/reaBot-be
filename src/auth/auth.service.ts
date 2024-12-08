@@ -1,49 +1,55 @@
 import {
+  BadRequestException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
-  InternalServerErrorException,
-  BadRequestException,
-} from '@nestjs/common';
-import { User } from '../users/entity/users.entity';
-import { DataSource, Repository } from 'typeorm';
-import * as bcrypt from 'bcryptjs';
-import { JwtService } from '@nestjs/jwt';
-import { jwtConstants } from './constants';
-import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
-import { map } from 'rxjs/operators';
-import axios from 'axios';
-const fs = require('fs');
-const path = require('path');
+} from "@nestjs/common";
+import { User } from "../users/entity/users.entity";
+import { DataSource, Repository } from "typeorm";
+import * as bcrypt from "bcryptjs";
+import { JwtService } from "@nestjs/jwt";
+import { jwtConstants } from "./constants";
+import { ConfigService } from "@nestjs/config";
+import { HttpService } from "@nestjs/axios";
+import { map } from "rxjs/operators";
+// import axios from "axios";
+// const fs = require("fs");
+// const path = require("path");
 export interface LoginUserDto {
   username: string;
   password: string;
 }
 
+type DifyAuthConfig = {
+  ACCESS_TOKEN: any;
+  REFRESH_TOKEN: any;
+  EXPIRES: number;
+};
+
 @Injectable()
 export class AuthService {
   private userRepository: Repository<User>;
   private logger = new Logger();
-  private DIFY_USER_USRN: string
-  private DIFY_USER_PSWD: string
-  private DIFY_URL: string
-  private readonly CONFIG_FILE_PATH = '/Users/loopshen/Downloads/be/reaBot-be/dify_user_token_config.json';
+  private DIFY_USER_USRN: string;
+  private DIFY_USER_PSWD: string;
+  private DIFY_URL: string;
+  // private readonly CONFIG_FILE_PATH = 'C:/Users/l/read-bot-be/usertoken/dify_user_token.json';
   constructor(
     private dataSource: DataSource,
     private readonly jwtService: JwtService,
     private configService: ConfigService,
-    private httpService: HttpService
+    private httpService: HttpService,
   ) {
     this.userRepository = this.dataSource.getRepository(User);
-    this.DIFY_USER_USRN = this.configService.get<string>('DIFY_USER_USRN');
-    this.DIFY_USER_PSWD = this.configService.get<string>('DIFY_USER_PSWD');
-    this.DIFY_URL = this.configService.get<string>('DIFY_URL');
+    this.DIFY_USER_USRN = this.configService.get<string>("DIFY_USER_USRN");
+    this.DIFY_USER_PSWD = this.configService.get<string>("DIFY_USER_PSWD");
+    this.DIFY_URL = this.configService.get<string>("DIFY_URL");
   }
   // 登录功能
   async login(loginUserDto: LoginUserDto) {
     const existUser = await this.validateUser(loginUserDto); // 验证信息（传入
-    const token = this.createToken(existUser);// 创建token（如果通过验证）
+    const token = this.createToken(existUser); // 创建token（如果通过验证）
     return {
       userId: existUser.id,
       token,
@@ -58,12 +64,12 @@ export class AuthService {
     const { username, password } = user;
     const existUser = await this.findByUsername(username);
     if (!existUser) {
-      throw new BadRequestException('用户不存在');
+      throw new BadRequestException("用户不存在");
     }
     const { password: encryptPwd } = existUser;
     const isOk = comparePwd(password, encryptPwd);
     if (!isOk) {
-      throw new BadRequestException('登录密码错误');
+      throw new BadRequestException("登录密码错误");
     }
     return existUser;
   }
@@ -84,10 +90,10 @@ export class AuthService {
       username: user.username,
     };
     try {
-      return this.jwtService.sign(payload, { secret: jwtConstants.secret });//后面这个一定要带上才能鉴定成功
+      return this.jwtService.sign(payload, { secret: jwtConstants.secret }); //后面这个一定要带上才能鉴定成功
     } catch (error) {
-      console.error('Error generating token:', error);
-      throw new Error('Error generating token');
+      console.error("Error generating token:", error);
+      throw new Error("Error generating token");
     }
   }
 
@@ -98,7 +104,7 @@ export class AuthService {
       return users;
     } catch (err) {
       this.logger.error(err.message, err.stack);
-      throw new InternalServerErrorException('Failed to retrieve users');
+      throw new InternalServerErrorException("Failed to retrieve users");
     }
   }
   // 查询指定用户信息
@@ -118,7 +124,7 @@ export class AuthService {
         throw err;
       }
       throw new InternalServerErrorException(
-        'Something went wrong, Try again!',
+        "Something went wrong, Try again!",
       );
     }
   }
@@ -140,46 +146,46 @@ export class AuthService {
         throw err;
       }
       throw new InternalServerErrorException(
-        'Failed to delete user, try again!',
+        "Failed to delete user, try again!",
       );
     }
   }
 
   // 在构造函数或初始化方法中添加
-  private initializeConfigDirectory() {
-    if (!fs.existsSync(this.CONFIG_FILE_PATH)) {
-      fs.mkdirSync(this.CONFIG_FILE_PATH, { recursive: true });
-      console.log('Created config directory at:', this.CONFIG_FILE_PATH);
-    }
-  }
+  // private initializeConfigDirectory() {
+  //   if (!fs.existsSync(this.CONFIG_FILE_PATH)) {
+  //     fs.mkdirSync(this.CONFIG_FILE_PATH, { recursive: true });
+  //     console.log('Created config directory at:', this.CONFIG_FILE_PATH);
+  //   }
+  // }
 
   // 用于创建dify的token
   async loginAndGetTokens(): Promise<any> {
-    console.log('自动获取token');
+    console.log("自动获取token");
     try {
-      this.initializeConfigDirectory();
+      // this.initializeConfigDirectory();
       const url = `${this.DIFY_URL}/console/api/login`;
       const body = {
         email: this.DIFY_USER_USRN,
         password: this.DIFY_USER_PSWD,
         language: "zh-Hans",
-        remember_me: true
+        remember_me: true,
       };
 
       const headers = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
 
       const response = await this.httpService.post(url, body, { headers })
         .pipe(
-          map(response => {
-            console.log('API response:', response.data);
+          map((response) => {
+            console.log("API response:", response.data);
             return {
               accessToken: response.data.data.access_token,
               refreshToken: response.data.data.refresh_token,
-              expiresIn: response.data.data.expires_in || 3600
+              expiresIn: response.data.data.expires_in || 3600,
             };
-          })
+          }),
         )
         .toPromise();
 
@@ -188,13 +194,14 @@ export class AuthService {
       process.env.REFRESH_TOKEN = response.refreshToken;
 
       // 保存配置文件，并打印保存位置
-      const config = {
+      const config: DifyAuthConfig = {
         ACCESS_TOKEN: response.accessToken,
         REFRESH_TOKEN: response.refreshToken,
-        EXPIRES: Date.now() + (response.expiresIn * 1000)
+        EXPIRES: Date.now() + (response.expiresIn * 1000),
       };
-      fs.writeFileSync(this.CONFIG_FILE_PATH, JSON.stringify(config, null, 2));
-      console.log('Config file saved at:', this.CONFIG_FILE_PATH);
+      global.dify_auth = config;
+      // fs.writeFileSync(this.CONFIG_FILE_PATH, JSON.stringify(config, null, 2));
+      // console.log('Config file saved at:', this.CONFIG_FILE_PATH);
 
       // 设置自动重新登录
       // 在token过期前10分钟重新登录
@@ -203,11 +210,11 @@ export class AuthService {
 
       return response;
     } catch (error) {
-      console.error('Login Error:', {
+      console.error("Login Error:", {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
-        message: error.message
+        message: error.message,
       });
       throw error;
     }
@@ -217,29 +224,32 @@ export class AuthService {
   async getCurrentToken(): Promise<string> {
     try {
       // 检查配置文件
-      const configPath = path.join(__dirname, '.runtime-config.json');
-      if (fs.existsSync(configPath)) {
-        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      // const configPath = path.join(__dirname, '.runtime-config.json');
+      // if (fs.existsSync(configPath)) {
+      // const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      const config: undefined | DifyAuthConfig = global.dify_auth; // 假设全局变量中存储了配置信息
 
+      if (config) {
         // 如果token即将过期（小于5分钟），重新登录
         if (config.EXPIRES - Date.now() < 300000) {
           const newTokens = await this.loginAndGetTokens();
           return newTokens.accessToken;
         }
-
         return config.ACCESS_TOKEN;
+      } else {
+        // 如果没有配置文件，执行登录
+        const newTokens = await this.loginAndGetTokens();
+        return newTokens.accessToken;
       }
-
-      // 如果没有配置文件，执行登录
-      const tokens = await this.loginAndGetTokens();
-      return tokens.accessToken;
+      // const tokens = await this.loginAndGetTokens();
+      // return tokens.accessToken;
     } catch (error) {
-      console.error('Get Current Token Error:', error);
+      console.error("Get Current Token Error:", error);
       throw error;
     }
   }
 
-  //弃用的refresh Token方法 
+  //弃用的refresh Token方法
   // async refreshToken(refreshToken: string, accessToken:string) {
   //   const TOKEN_ENDPOINT = `${this.DIFY_URL}/console/api/refresh-token`;
   //   try {

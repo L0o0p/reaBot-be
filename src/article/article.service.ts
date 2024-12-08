@@ -251,17 +251,6 @@ export class ArticleService {
       }
     }
   }
-  // 从dify知识库文档列表获取(名字 -> 本地搜索获取)文档文本{name,content}
-  async getPropertyArticle(userId: number) {
-    const botId = (await this.userService.getBotIdByUserId(userId)).bot_id;
-    console.log('botIdX', botId);
-    const articleName = await this.fetchDifyLibraryFiles(botId)
-    console.log('articleNameX', articleName);
-
-    const article_name = articleName.split('.')[0];
-    const propertyArticle = this.getArticleByTitle(article_name)
-    return propertyArticle
-  }
   // 创建dify知识库（空）
   async createLibrary(article_title: string) {
     const url = `${this.DIFY_URL}/v1/datasets`

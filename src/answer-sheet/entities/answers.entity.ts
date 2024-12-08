@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Question } from './questions.entity';
 import { AnswerSheet } from './answer-sheet.entity';
+import { User } from 'src/users/entity/users.entity';
 
 @Entity()
 export class Answer {
@@ -27,4 +28,7 @@ export class Answer {
 
   @ManyToOne(() => AnswerSheet, answerSheet => answerSheet.answers)
   answerSheet: AnswerSheet;
+
+  @ManyToOne(() => User, user => user.answerSheets)
+  user: User;
 }

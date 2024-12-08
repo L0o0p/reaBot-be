@@ -1,20 +1,43 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, InternalServerErrorException, Param, Post, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ArticleService } from './article.service';
-import { Article } from './entities/article.entity';
-import { JwtAuthGuard } from 'src/auth/jwt.guard';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { DifyService } from 'src/chat/dify.service';
-import * as mammoth from 'mammoth';
-import { Question } from 'src/answer-sheet/entities/questions.entity';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { PaperService } from './paper.service';
-import { UsersService } from 'src/users/users.service';
-import { TextPreprocessorService } from './upload.service';
-import { ArticleCollection, ArticleQuestion, BotId, CreateArticle, KnowledgeBaseResponse, QuizResponse, TrackingQuestion } from './dto/article.dto';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  HttpStatus,
+  InternalServerErrorException,
+  Param,
+  Post,
+  Req,
+  Res,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from "@nestjs/common";
+import { ArticleService } from "./article.service";
+import { Article } from "./entities/article.entity";
+import { JwtAuthGuard } from "src/auth/jwt.guard";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { DifyService } from "src/chat/dify.service";
+import * as mammoth from "mammoth";
+import { Question } from "src/answer-sheet/entities/questions.entity";
+import { Repository } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { PaperService } from "./paper.service";
+import { UsersService } from "src/users/users.service";
+import { TextPreprocessorService } from "./upload.service";
+import {
+  ArticleCollection,
+  ArticleQuestion,
+  BotId,
+  CreateArticle,
+  KnowledgeBaseResponse,
+  QuizResponse,
+  TrackingQuestion,
+} from "./dto/article.dto";
 
 @UseGuards(JwtAuthGuard)
-@Controller('article')
+@Controller("article")
 export class ArticleController {
   logger: any;
   constructor(
@@ -24,21 +47,22 @@ export class ArticleController {
     private readonly uploadService: TextPreprocessorService,
     // private dataSource: DataSource,
     private userService: UsersService,
-    @InjectRepository(Question)
-    private questionRepository: Repository<Question>,
-    @InjectRepository(Article)
-    private articleRepository: Repository<Article>,
-  ) { }
+    @InjectRepository(Question) private questionRepository: Repository<
+      Question
+    >,
+    @InjectRepository(Article) private articleRepository: Repository<Article>,
+  ) {}
 
-  @Get('all')
+  @Get("all")
   async getAllQuestions() {
     return await this.articleRepository.find() as ArticleCollection;
   }
 
   // 获取所有dify知识库
-  @Get('/library')
+  @Get("/library")
   async getDifyLibrary() {
-    return this.appService.fetchDifyLibrary() as unknown as KnowledgeBaseResponse;
+    return this.appService
+      .fetchDifyLibrary() as unknown as KnowledgeBaseResponse;
   }
   // 删除知识库
   // @Post(':dataset_id')
@@ -53,39 +77,39 @@ export class ArticleController {
   // }
 
   // 获取所有dify知识库文档列表
-  @Get('/library/files')
+  @Get("/library/files")
   async getDifyLibraryFiles(
     @Req() req: {
       user: {
         id: number;
         userId: number;
         username: string;
-      }
-    }
+      };
+    },
   ) {
-    const bot: BotId = await this.userService.getBotIdByUserId(req.user.userId)
-    const botId: string = bot.bot_id
+    const bot: BotId = await this.userService.getBotIdByUserId(req.user.userId);
+    const botId: string = bot.bot_id;
     return this.appService.fetchDifyLibraryFiles(botId) as unknown as string;
   }
 
   // 获取所用dify知识库文档列表中对应的文章
-  @Get('/propertyArticle')
+  @Get("/propertyArticle")
   async getPropertyArticle(
     @Req() req: {
       user: {
         id: number;
         userId: number;
         username: string;
-      }
-    }
+      };
+    },
   ) {
-    const article: Article = await this.appService.getPropertyArticle(req.user.userId);
-    return article;
+    const progress = await this.paperService.getProgress(req.user.userId);
+    return progress.lastArticle as any;
   }
 
   // 根据 ID 获取本地存储的文章
-  @Get(':title')
-  async getUserById(@Param('title') title: string): Promise<Article> {
+  @Get(":title")
+  async getUserById(@Param("title") title: string): Promise<Article> {
     const article: Article = await this.appService.getArticleByTitle(title);
     return article;
   }
@@ -118,41 +142,46 @@ export class ArticleController {
   //   return articleQuestions;
   // }
 
-  @Get('get/questions')
+  @Get("get/questions")
   async getQuestions(
     @Req() req: {
       user: {
         id: number;
         userId: number;
         username: string;
-      }
-    }
+      };
+    },
   ): Promise<QuizResponse> {
-    console.log('req.user.userId', req.user);
+    console.log("req.user.userId", req.user);
     const userId = req.user.userId;
-    const library_id = await this.chatService.fetchBotLibraryId(userId)
-    const getArticle = (await this.chatService.getArticleName(library_id, userId))
-    const title = getArticle.title
-    const article_id = (await this.getUserById(title)).id
+    // const library_id = await this.chatService.fetchBotLibraryId(userId);
+    // const getArticle = await this.chatService.getArticleName(
+    //   library_id,
+    //   userId,
+    // );
+    // const title = getArticle.title;
+    // const article_id = (await this.getUserById(title)).id;
+    const progress = await this.paperService.getProgress(userId);
 
-    const articleQuestions: ArticleQuestion[] = await this.appService.getQuestionsByArticleID(article_id)
+    const articleQuestions: ArticleQuestion[] = await this.appService
+      .getQuestionsByArticleID(progress.lastArticle.id);
     // 把跟踪题提出来
-    let trackingQuestions: TrackingQuestion[] = []
+    let trackingQuestions: TrackingQuestion[] = [];
     for (let i = 0; i < articleQuestions.length; i++) {
       const a = {
         id: (articleQuestions[i] as ArticleQuestion).id,
         articleId: articleQuestions[i].articleId,
         question: articleQuestions[i].question,
         options: articleQuestions[i].f_Options,
-        correctAnswer: articleQuestions[i].f_correctAnswer
-      }
-      trackingQuestions.push(a)
+        correctAnswer: articleQuestions[i].f_correctAnswer,
+      };
+      trackingQuestions.push(a);
     }
     return { articleQuestions, trackingQuestions };
   }
 
-  @Post('get/uploadDoc')
-  @UseInterceptors(FileInterceptor('file'))
+  @Post("get/uploadDoc")
+  @UseInterceptors(FileInterceptor("file"))
   async processText(
     @UploadedFile() file: Express.Multer.File,
     @Req() req: {
@@ -160,63 +189,77 @@ export class ArticleController {
         id: number;
         userId: number;
         username: string;
-      }
-    }
+      };
+    },
   ) {
     // 1. 接受文档并且创建知识库 + 存储到本地数据库
-    const article_title: string = file.originalname.split('.')[0] // 获取文件名
-    console.log('article_title', article_title);
-    const data = await this.appService.createLibrary(article_title) // 使用上传内容创建空知识库
-    console.log('data', data);
+    const article_title: string = file.originalname.split(".")[0]; // 获取文件名
+    console.log("article_title", article_title);
+    const data = await this.appService.createLibrary(article_title); // 使用上传内容创建空知识库
+    console.log("data", data);
 
-    const id = data.id // 新知识库的id
-    const feedback = await this.appService.createLibraryByDoc(file, id)
-    console.log('data', data);
-    console.log('feedback', feedback);
+    const id = data.id; // 新知识库的id
+    const feedback = await this.appService.createLibraryByDoc(file, id);
+    console.log("data", data);
+    console.log("feedback", feedback);
 
     // 2. 处理doc中的article文本并储存文章（doc+内容文本）
-    await this.uploadService.processArticle(file, id)
-    if (!feedback || !data) return { code: 400, message: '创建知识库失败,有可能因为文件名超过40个字符' }
-    console.log('file', file);
+    await this.uploadService.processArticle(file, id);
+    if (!feedback || !data) {
+      return {
+        code: 400,
+        message: "创建知识库失败,有可能因为文件名超过40个字符",
+      };
+    }
+    console.log("file", file);
 
     // 读取doc内容
-    const buf = { buffer: Buffer.from(file.buffer) }
+    const buf = { buffer: Buffer.from(file.buffer) };
     const rawTextData = await mammoth.extractRawText(buf);
     const rawText: string = rawTextData.value;
-    console.log('rawText', rawText);
+    console.log("rawText", rawText);
 
     // 将doc内容中的「练习题目」「阅读文章」「跟踪练习」分开
-    const procceedText = await this.uploadService.processText(rawText)
-    console.log('procceedText', procceedText);
+    const procceedText = await this.uploadService.processText(rawText);
+    console.log("procceedText", procceedText);
 
     // 上传问题和答案到dify
-    const uploadQuestionsAndAnswersToDify = await this.uploadService.uploadQuestionsAndAnswersToDify(procceedText.questionsText, procceedText.trackingQuestionsText, id)
-    console.log('uploadQuestionsAndAnswersToDify', uploadQuestionsAndAnswersToDify);
+    const uploadQuestionsAndAnswersToDify = await this.uploadService
+      .uploadQuestionsAndAnswersToDify(
+        procceedText.questionsText,
+        procceedText.trackingQuestionsText,
+        id,
+      );
+    console.log(
+      "uploadQuestionsAndAnswersToDify",
+      uploadQuestionsAndAnswersToDify,
+    );
 
     // 「练习题目」进行处理并存储
-    const articleTitle = file.originalname.split('.')[0];
-    const article = await this.articleRepository.findOne({ where: { title: articleTitle } })
-    const articleId = article.id
-    console.log('articleIdX', articleId);
+    const articleTitle = file.originalname.split(".")[0];
+    const article = await this.articleRepository.findOne({
+      where: { title: articleTitle },
+    });
+    const articleId = article.id;
+    console.log("articleIdX", articleId);
 
     // 处理跟踪题
     const procceedF_Qustions = await this.uploadService.processFQuestions(
       procceedText.trackingQuestionsText,
-    )
-    console.log('procceedF_Qustions', procceedF_Qustions.length, procceedF_Qustions);
+    );
+    console.log(
+      "procceedF_Qustions",
+      procceedF_Qustions.length,
+      procceedF_Qustions,
+    );
     // 处理练习题
     const procceedQustions = await this.uploadService.processQuestions(
       procceedText.questionsText,
       procceedF_Qustions,
-      articleId
-    )
-    console.log('procceedQustions', procceedQustions);
+      articleId,
+    );
+    console.log("procceedQustions", procceedQustions);
 
-
-
-    return procceedF_Qustions
+    return procceedF_Qustions;
   }
-
-
 }
-

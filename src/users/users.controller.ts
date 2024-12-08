@@ -52,13 +52,13 @@ export class UsersController {
     const botKey = (await this.userService.saveBotKey(newBot.id)).token
     // 注册用户
     const newUser = await this.userService.register(user, newBot.id, botKey);
-    const newUser_id = newUser.id;
+    // const newUser_id = newUser.id;
     // 给用户创建一个进度
-    const paperId = await this.paperService.getPaperWithSmallestId()
-    await this.answerSheetService.createAnswerSheet(paperId, newUser_id)
-    const libraryId = await this.paperService.findLibraryIdByPaperId(paperId)
+    // const paperId = await this.paperService.getPaperWithSmallestId()
+    // await this.answerSheetService.createAnswerSheet(paperId, newUser_id)
+    // const libraryId = await this.paperService.findLibraryIdByPaperId(paperId)
     // 最新的答题卡（进度）=> 对应paperId.articleA => libraryId => changeSourceLibrary(newBot_id, libraryId)
-    const result = await this.chatService.changeSourceLibrary(newBot.id, libraryId);
+    // const result = await this.chatService.changeSourceLibrary(newBot.id, libraryId);
     // 创建新的进度记录，链接到新注册的用户
     // const newProgress = await this.userService.createUserProgress(newUser);
     return newUser

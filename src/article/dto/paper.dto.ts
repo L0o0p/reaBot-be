@@ -43,6 +43,9 @@ export interface Progress {
 }
 
 export interface LatestArticle {
-    currentArticleKey: string;//'A' | 'B';
+    lastArticle: Article;
+    currentArticleKey: string;
     currentQuestionNum: number;
+    currentAnserSheetID: number;
+    lastPaperID: number
 }

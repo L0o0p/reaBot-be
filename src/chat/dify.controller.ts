@@ -73,25 +73,27 @@ export class DifyController {
     return { state, bot_info }
   }
 
-  //修改机器人使用的知识库
-  // @Get('/change_library/:library_id')
+  // //修改机器人使用的知识库(使用标题)
+  // @Get('/change_libraryBytitle/:title')
   // @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
-  // async changeSourceLibrary(
-  //   @Param('library_id') libraryId: string,
+  // async changeSourceLibraryByTittle(
+  //   @Param('title') title: string,
   //   @Req() req: {
-  //   user: {
   //     user: {
+  //       id: number;
   //       userId: number;
-  //       token: string;
+  //       username: string;
   //     }
   //   }
-  // }
-  // ) {
-  //   const botId = await this.userService.getBotIdByUserId(req.user.userId);
-  //   // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
+  // ): Promise<{ result: "success"; }> {
+  //   const libraryId = (await this.articleService.getArticleByTitle(title)).library_id;
+  //   const botId = (await this.userService.getBotIdByUserId(req.user.userId)).bot_id;
   //   // 销毁conversation_id以便他能根据新的知识库创建一个新的对话
   //   await this.userService.destroyConversationId(req.user.userId);
+  //   console.log('libraryId', libraryId);
+  //   console.log('botId', botId);
 
+  //   // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
   //   try {
   //     const result = await this.appService.changeSourceLibrary(botId, libraryId);
   //     return result;
@@ -99,35 +101,6 @@ export class DifyController {
   //     throw new HttpException('Failed to change the library', HttpStatus.INTERNAL_SERVER_ERROR);
   //   }
   // }
-
-  //修改机器人使用的知识库(使用标题)
-  @Get('/change_libraryBytitle/:title')
-  @HttpCode(HttpStatus.OK) // 明确设置 HTTP 状态码为 200
-  async changeSourceLibraryByTittle(
-    @Param('title') title: string,
-    @Req() req: {
-      user: {
-        id: number;
-        userId: number;
-        username: string;
-      }
-    }
-  ): Promise<{ result: "success"; }> {
-    const libraryId = (await this.articleService.getArticleByTitle(title)).library_id;
-    const botId = (await this.userService.getBotIdByUserId(req.user.userId)).bot_id;
-    // 销毁conversation_id以便他能根据新的知识库创建一个新的对话
-    await this.userService.destroyConversationId(req.user.userId);
-    console.log('libraryId', libraryId);
-    console.log('botId', botId);
-
-    // const botId = 'a2ff7b15-cfc4-489d-96cf-307d33c43b00';
-    try {
-      const result = await this.appService.changeSourceLibrary(botId, libraryId);
-      return result;
-    } catch (error) {
-      throw new HttpException('Failed to change the library', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
 
   // 获取聊天记录
   @Get('/chatlog')

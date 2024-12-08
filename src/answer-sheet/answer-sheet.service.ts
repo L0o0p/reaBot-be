@@ -25,44 +25,44 @@ export class AnswerSheetService {
   }
 
   // 录入学生提交的成绩，如果答题卡不存在就先创建一个答题卡
-  async recordUserAnswer(answerText: number, isCorrect: boolean, questionId: number, articleId: number, userId: number) {
+  async recordUserAnswer(answerText: number, isCorrect: boolean, questionID: number, answerSheetID: number, userId: number) {
     // Retrieve the paper ID based on article ID
-    const papers = await this.paperRepository.find({
-      where: [
-        { articleAId: articleId },
-        { articleBId: articleId }
-      ]
-    });
-    if (!papers.length) {
-      throw new Error('No paper found for the given article ID');
-    }
-    const paperId = papers[0].id;
-    console.log('paperId:', paperId);
+    // const papers = await this.paperRepository.find({
+    //   where: [
+    //     { articleAId: articleId },
+    //     { articleBId: articleId }
+    //   ]
+    // });
+    // if (!papers.length) {
+    //   throw new Error('No paper found for the given article ID');
+    // }
+    // const paperId = papers[0].id;
+    // console.log('paperId:', paperId);
     console.log('userId:', userId);
 
     // Retrieve the answersheet for the user and paper
-    let answerSheets = await this.answerSheetRepository.find({
-      where: { paper: { id: paperId }, user: { id: userId } }
-    });
-    console.log("answerSheetsX", answerSheets);
+    // let answerSheets = await this.answerSheetRepository.find({
+    //   where: { paper: { id: paperId }, user: { id: userId } }
+    // });
+    // console.log("answerSheetsX", answerSheets);
 
 
-    // Create an answersheet if none exists
-    if (!answerSheets.length) {
-      await this.createAnswerSheet(paperId, userId);
-      answerSheets = await this.answerSheetRepository.find({
-        where: { paper: { id: paperId }, user: { id: userId } }
-      });
-    }
+    // // Create an answersheet if none exists
+    // if (!answerSheets.length) {
+    //   await this.createAnswerSheet(paperId, userId);
+    //   answerSheets = await this.answerSheetRepository.find({
+    //     where: { paper: { id: paperId }, user: { id: userId } }
+    //   });
+    // }
 
-    const answerSheetId = answerSheets[0].id;
-    console.log('answerSheetId:', answerSheetId);
+    // const answerSheetId = answerSheets[0].id;
+    // console.log('answerSheetId:', answerSheetId);
 
     // Check if an answer already exists with the given questionId and answersheetId
     const existingAnswer = await this.answerRepository.findOne({
       where: {
-        question: { id: questionId },
-        answerSheet: { id: answerSheetId }
+        question: { id: questionID },
+        answerSheet: { id: answerSheetID }
       }
     });
 
@@ -70,7 +70,7 @@ export class AnswerSheetService {
       // Update the existing answer
       existingAnswer.answerText = answerText;
       existingAnswer.isCorrect = isCorrect;
-      existingAnswer.ifTracking = isCorrect ? true : false
+      existingAnswer.ifTracking = isCorrect
       await this.answerRepository.save(existingAnswer);
       console.log('Updated existing answer.');
     } else {
@@ -78,9 +78,9 @@ export class AnswerSheetService {
       const userAnswer = {
         answerText: answerText,
         isCorrect: isCorrect,
-        question: { id: questionId },
-        ifTracking: isCorrect ? true : false,
-        answerSheet: { id: answerSheetId }
+        question: { id: questionID },
+        ifTracking: isCorrect,
+        answerSheet: { id: answerSheetID }
       };
       await this.answerRepository.save(userAnswer);
       console.log('Created new answer.');
@@ -134,14 +134,5 @@ export class AnswerSheetService {
   async createStartTime() {
     return
   }
-
-  async save(answerSheet: AnswerSheet) {
-    const mergedAnswerSheet = this.answerSheetRepository.merge(
-      new AnswerSheet(),
-      answerSheet
-    );
-    return this.answerSheetRepository.save(mergedAnswerSheet);
-  }
-
 
 }
