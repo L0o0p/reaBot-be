@@ -31,6 +31,7 @@ type ArticleRes = {
     id: number;
     title: string;
     content: string;
+    content_raw: string;
     library_id: string;
 };
 

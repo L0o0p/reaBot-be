@@ -199,19 +199,7 @@ export class ArticleController {
     console.log("data", data);
 
     const id = data.id; // 新知识库的id
-    const feedback = await this.appService.createLibraryByDoc(file, id);
     console.log("data", data);
-    console.log("feedback", feedback);
-
-    // 2. 处理doc中的article文本并储存文章（doc+内容文本）
-    await this.uploadService.processArticle(file, id);
-    if (!feedback || !data) {
-      return {
-        code: 400,
-        message: "创建知识库失败,有可能因为文件名超过40个字符",
-      };
-    }
-    console.log("file", file);
 
     // 读取doc内容
     const buf = { buffer: Buffer.from(file.buffer) };
@@ -221,19 +209,47 @@ export class ArticleController {
 
     // 将doc内容中的「练习题目」「阅读文章」「跟踪练习」分开
     const procceedText = await this.uploadService.processText(rawText);
+    // 将「阅读文章」分段上传
     console.log("procceedText", procceedText);
+    const chunks = procceedText.articleText.split("\n\n");
+    chunks.forEach(async (chunk: string, index: number) => {
+      const title = (index < 1)
+        ? `文章题目：${article_title}`
+        : `文章原文第${index}段`;
+      const text = {
+        title: title,
+        content: title + "\n" + chunk,
+        
+      };
+      const feedback = await this.appService.createLibraryText(id, text);
+      console.log("feedbackXXX", feedback);
+    });
+
+    // 2. 处理doc中的article文本并储存文章（doc+内容文本）
+    await this.uploadService.processArticle(file, rawText, id);
+    // if (!feedback || !data) {
+    //   return {
+    //     code: 400,
+    //     message: "创建知识库失败,有可能因为文件名超过40个字符",
+    //   };
+    // }
+    console.log("file", file);
 
     // 上传问题和答案到dify
-    const uploadQuestionsAndAnswersToDify = await this.uploadService
-      .uploadQuestionsAndAnswersToDify(
+    const practiceSection = `「练习题目」`;
+    const practiceUploadResult = await this.uploadService
+      .chunksUploadToDifyLibrary(
         procceedText.questionsText,
-        procceedText.trackingQuestionsText,
+        practiceSection,
         id,
       );
-    console.log(
-      "uploadQuestionsAndAnswersToDify",
-      uploadQuestionsAndAnswersToDify,
-    );
+    const trackingPracticeSection = `「跟踪练习」`;
+    const trackingPracticeUploadResult = await this.uploadService
+      .chunksUploadToDifyLibrary(
+        procceedText.trackingQuestionsText,
+        trackingPracticeSection,
+        id,
+      );
 
     // 「练习题目」进行处理并存储
     const articleTitle = file.originalname.split(".")[0];

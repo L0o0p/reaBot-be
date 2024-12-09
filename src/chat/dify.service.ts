@@ -89,7 +89,7 @@ export class DifyService {
     // 等待 postData 方法返回结果
     const { conversation_id, answer } = await this.postData(url, body, headers);
     console.log(conversation_id, answer);
-    if (skip_cid) {
+    if (conversation_id !== user_found.conversation_id) {
       await this.updateUserConversation(conversation_id, user_found);
     }
     // 根据业务需求调整返回值
@@ -333,7 +333,7 @@ export class DifyService {
         },
         model: {
           provider: "moonshot",
-          name: "moonshot-v1-32k",
+          name: "moonshot-v1-auto",
           mode: "chat",
           completion_params: { stop: [] },
         },

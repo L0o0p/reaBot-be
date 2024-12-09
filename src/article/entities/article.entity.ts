@@ -1,6 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { DocFile } from './docFile.entity';
-import { Question } from '../../answer-sheet/entities/questions.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { DocFile } from "./docFile.entity";
+import { Question } from "../../answer-sheet/entities/questions.entity";
 
 @Entity()
 export class Article {
@@ -10,15 +10,18 @@ export class Article {
   @Column({ unique: true, nullable: false })
   title: string;
 
-  @Column('text')
+  @Column("text")
   content: string;
+
+  @Column("text", { nullable: true })
+  content_raw: string;
 
   @Column({ nullable: true })
   library_id: string;
 
-  @OneToMany(() => Question, question => question.article)
+  @OneToMany(() => Question, (question) => question.article)
   questions: Question[];
 
-  @OneToMany(() => DocFile, file => file.article)
+  @OneToMany(() => DocFile, (file) => file.article)
   files: File[];
 }

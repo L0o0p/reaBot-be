@@ -1,17 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CreateAnswerSheetDto } from './dto/create-answer-sheet.dto';
-import { UpdateAnswerSheetDto } from './dto/update-answer-sheet.dto';
 import { DataSource, Repository } from 'typeorm';
 import { Answer } from './entities/answers.entity';
 import { AnswerSheet } from './entities/answer-sheet.entity';
-import { Paper } from '.././article/entities/paper.entity';
 import { Question } from './entities/questions.entity';
 
 @Injectable()
 export class AnswerSheetService {
   private answerRepository: Repository<Answer>;
   private answerSheetRepository: Repository<AnswerSheet>;
-  private paperRepository: Repository<Paper>;
   private questionRepository: Repository<Question>;
   private logger = new Logger('AnswerSheetService');
 
@@ -20,7 +16,6 @@ export class AnswerSheetService {
   ) {
     this.answerRepository = this.dataSource.getRepository(Answer);
     this.answerSheetRepository = this.dataSource.getRepository(AnswerSheet);
-    this.paperRepository = this.dataSource.getRepository(Paper);
     this.questionRepository = this.dataSource.getRepository(Question);
   }
 

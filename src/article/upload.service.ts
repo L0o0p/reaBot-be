@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import * as mammoth from 'mammoth';
-import { Question } from 'src/answer-sheet/entities/questions.entity';
-import { DataSource } from 'typeorm';
-import { ArticleService } from './article.service';
+import { Injectable } from "@nestjs/common";
+import * as mammoth from "mammoth";
+import { Question } from "src/answer-sheet/entities/questions.entity";
+import { DataSource } from "typeorm";
+import { ArticleService } from "./article.service";
 
 // interface Question {
 //     question: string;
@@ -19,40 +19,39 @@ export class TextPreprocessorService {
 
     constructor(
         private dataSource: DataSource,
-        private articleService: ArticleService
+        private articleService: ArticleService,
     ) {
-        this.articleText = '';
+        this.articleText = "";
         this.trackingQuestions = [];
         this.questionRepository = this.dataSource.getRepository(Question);
     }
 
-
     async processText(text: string) {
         // 使用 split 方法根据关键词将文本分成三个部分
-        const parts = text.split('\n');
+        const parts = text.split("\n");
 
-        let articleText = '';
-        let questionsText = '';
-        let trackingQuestionsText = '';
+        let articleText = "";
+        let questionsText = "";
+        let trackingQuestionsText = "";
 
         // 遍历文本行,根据关键词将内容添加到对应的部分
-        let currentSection = 'article';
+        let currentSection = "article";
         for (const line of parts) {
-            if (line === '阅读文章') {
-                currentSection = 'article';
-            } else if (line === '练习题目') {
-                currentSection = 'questions';
-            } else if (line === '跟踪练习') {
-                currentSection = 'trackingQuestions';
+            if (line === "阅读文章") {
+                currentSection = "article";
+            } else if (line === "练习题目") {
+                currentSection = "questions";
+            } else if (line === "跟踪练习") {
+                currentSection = "trackingQuestions";
             } else {
                 switch (currentSection) {
-                    case 'article':
+                    case "article":
                         articleText += `${line}\n`;
                         break;
-                    case 'questions':
+                    case "questions":
                         questionsText += `${line}\n`;
                         break;
-                    case 'trackingQuestions':
+                    case "trackingQuestions":
                         trackingQuestionsText += `${line}\n`;
                         break;
                 }
@@ -62,7 +61,7 @@ export class TextPreprocessorService {
         return {
             articleText: articleText.trim(),
             questionsText: questionsText.trim(),
-            trackingQuestionsText: trackingQuestionsText.trim()
+            trackingQuestionsText: trackingQuestionsText.trim(),
         };
     }
 
@@ -71,22 +70,29 @@ export class TextPreprocessorService {
     }
     async processArticle(
         file: Express.Multer.File,
-        datasetId: string
+        raw: string,
+        datasetId: string,
     ) {
-        const buf = { buffer: Buffer.from(file.buffer) }
+        const buf = { buffer: Buffer.from(file.buffer) };
         const htmlData = await mammoth.convertToHtml(buf);
-        console.log('html', htmlData.value);
-        const savableData = preprocessArticleContent(htmlData.value)
-        console.log('savableData', savableData);
+        console.log("html", htmlData.value);
+        const savableData = preprocessArticleContent(htmlData.value);
+        console.log("savableData", savableData);
 
         // 3. 储存到本地
-        const tag = "article"
+        const tag = "article";
         // processedText,
-        await this.articleService.save_articleFile(file, datasetId, tag, savableData);
+        await this.articleService.save_articleFile(
+            file,
+            datasetId,
+            tag,
+            savableData,
+            raw
+        );
 
-        const finishText = 'Article have been saved'
+        const finishText = "Article have been saved";
         console.log(finishText);
-        return finishText
+        return finishText;
     }
     // async processAndStoreQuestions(questionsText: string, articleId: number) {
     //     const chunks_A: string[] = questionsText.split('\n\n\n'); // 分开每个「问题块」
@@ -137,10 +143,14 @@ export class TextPreprocessorService {
     //         }
     //     }
     // }
-    async processQuestions(questionsText: string, procceedF_Qustions: Question[], articleId: number) {
-        const chunks: string[] = questionsText.split('\n\n\n'); // 分开每个「问题块」
+    async processQuestions(
+        questionsText: string,
+        procceedF_Qustions: Question[],
+        articleId: number,
+    ) {
+        const chunks: string[] = questionsText.split("\n\n\n"); // 分开每个「问题块」
         const savedQuestions: Question[] = [];
-        
+
         if (chunks.length === 0) {
             console.log("chunks长度为0");
             return savedQuestions;
@@ -150,106 +160,131 @@ export class TextPreprocessorService {
             const chunk = chunks[i];
 
             // 问题和选项
-            const correctAnswerIndex = chunk.indexOf('Correct Answer:');
-            const questionAndOptions = chunk.slice(0, correctAnswerIndex).trim();
-            const lines = questionAndOptions.split('\n').filter(line => line.trim() !== '');
+            const correctAnswerIndex = chunk.indexOf("Correct Answer:");
+            const questionAndOptions = chunk.slice(0, correctAnswerIndex)
+                .trim();
+            const lines = questionAndOptions.split("\n").filter((line) =>
+                line.trim() !== ""
+            );
             const question = lines[0]; // 1. 取出「问题本身」
             const options = lines.slice(1); // 2. 取出「问题选项」
 
             // 正确答案
-            const correctAnswer = chunk.slice(correctAnswerIndex + 'Correct Answer:'.length).trim().split('\n')[0];
+            const correctAnswer =
+                chunk.slice(correctAnswerIndex + "Correct Answer:".length)
+                    .trim().split("\n")[0];
 
             // 答案解析
-            const explanationIndex = chunk.indexOf('Explanation:');
-            const explanation = chunk.slice(explanationIndex + 'Explanation:'.length).trim();
+            const explanationIndex = chunk.indexOf("Explanation:");
+            const explanation = chunk.slice(
+                explanationIndex + "Explanation:".length,
+            ).trim();
 
             // 检查数据库中是否已存在相同的问题记录
             let existingQuestion = await this.questionRepository.findOne({
                 where: {
                     question: question,
-                    articleId: articleId
-                }
+                    articleId: articleId,
+                },
             });
 
             if (existingQuestion) {
-                console.log('existingQuestion', existingQuestion);
-                console.log('更新现有的问题记录');
+                console.log("existingQuestion", existingQuestion);
+                console.log("更新现有的问题记录");
                 // 更新现有的问题记录
                 existingQuestion.question = question;
                 existingQuestion.f_Question = procceedF_Qustions[i].question;
                 existingQuestion.options = options;
                 existingQuestion.f_Options = procceedF_Qustions[i].options;
                 existingQuestion.correctAnswer = correctAnswer;
-                existingQuestion.f_correctAnswer = procceedF_Qustions[i].correctAnswer;
+                existingQuestion.f_correctAnswer =
+                    procceedF_Qustions[i].correctAnswer;
                 existingQuestion.explanation = explanation;
                 await this.questionRepository.save(existingQuestion);
                 savedQuestions.push(existingQuestion);
             } else {
                 // 创建新的问题记录
-                console.log('没有已存在的问题记录，创建新的问题记录');
+                console.log("没有已存在的问题记录，创建新的问题记录");
                 const quizQuestion = new Question();
                 quizQuestion.question = question;
                 quizQuestion.f_Question = procceedF_Qustions[i].question;
                 quizQuestion.options = options;
                 quizQuestion.f_Options = procceedF_Qustions[i].options;
                 quizQuestion.correctAnswer = correctAnswer;
-                quizQuestion.f_correctAnswer = procceedF_Qustions[i].correctAnswer;
+                quizQuestion.f_correctAnswer =
+                    procceedF_Qustions[i].correctAnswer;
                 quizQuestion.explanation = explanation;
                 quizQuestion.score = 1;
                 quizQuestion.articleId = articleId;
-                const savedQuestion = await this.questionRepository.save(quizQuestion);
+                const savedQuestion = await this.questionRepository.save(
+                    quizQuestion,
+                );
                 savedQuestions.push(savedQuestion);
             }
             await Promise.all(promises);
-            console.log('savedQuestions', savedQuestions);
+            console.log("savedQuestions", savedQuestions);
         }
     }
     async processFQuestions(trackingQuestionsText: string) {
-        const chunks: string[] = trackingQuestionsText.split('\n\n\n'); // 分开每个「问题块」
+        const chunks: string[] = trackingQuestionsText.split("\n\n\n"); // 分开每个「问题块」
         const savedQuestions: Question[] = [];
 
         for (const chunk of chunks) {
             // 问题和选项
-            const correctAnswerIndex = chunk.indexOf('Correct Answer:');
-            const questionAndOptions = chunk.slice(0, correctAnswerIndex).trim();
-            const lines = questionAndOptions.split('\n').filter(line => line.trim() !== '');
+            const correctAnswerIndex = chunk.indexOf("Correct Answer:");
+            const questionAndOptions = chunk.slice(0, correctAnswerIndex)
+                .trim();
+            const lines = questionAndOptions.split("\n").filter((line) =>
+                line.trim() !== ""
+            );
             const question = lines[0]; // 1. 取出「问题本身」
             const options = lines.slice(1); // 2. 取出「问题选项」
 
             // 正确答案
-            const correctAnswer = chunk.slice(correctAnswerIndex + 'Correct Answer:'.length).trim().split('\n')[0];
+            const correctAnswer =
+                chunk.slice(correctAnswerIndex + "Correct Answer:".length)
+                    .trim().split("\n")[0];
 
-            console.log('没有已存在的问题记录，创建新的问题记录');
+            console.log("没有已存在的问题记录，创建新的问题记录");
             const quizQuestion = new Question();
             quizQuestion.question = question;
             quizQuestion.options = options;
             quizQuestion.correctAnswer = correctAnswer;
             savedQuestions.push(quizQuestion);
         }
-        return savedQuestions
+        return savedQuestions;
     }
 
-    async uploadQuestionsAndAnswersToDify(questionsText: string, trackingQuestionsText: string, id: string) {
-        // 拿到文件中除了文章本身的部分
-        const text = {
-            title: 'Questions, Answers And Explantions',
-            content: '「练习题目」及其答案和解析' + '\n' + questionsText + '\n' + '\n' + '「跟踪练习」及其答案和解析' + '\n' + trackingQuestionsText,
-        }
-        // 上传文档到指定知识库
-        const result = await this.articleService.createLibraryText(id, text)
-        // 返回上传结果
-        console.log('resultX', result);
-        return result
+    async chunksUploadToDifyLibrary(
+        uploadContent: string,
+        sectionName: string,
+        libraryID: string,
+    ) {
+        console.log(sectionName);
+
+        let blocks = uploadContent.split(/(?=\d+\.)/).filter(Boolean);
+        console.log(blocks);
+
+        blocks.forEach(async (block: string, index: number) => {
+            const title = `${sectionName}第${index + 1}题`;
+            const text = {
+                title: title,
+                content: title + "\n" + block,
+            };
+            const feedback = await this.articleService.createLibraryText(
+                libraryID,
+                text,
+            );
+            console.log("feedbackXXX", feedback);
+        });
     }
 
     getTrackingQuestions(): Question[] {
         return this.trackingQuestions;
     }
-
-
 }
 function getTextAfterFirstNewline(text) {
-    const index = text.indexOf('\n');
+    const index = text.indexOf("\n");
     if (index !== -1) {
         return text.substring(index + 1);
     }
@@ -257,21 +292,21 @@ function getTextAfterFirstNewline(text) {
 }
 function preprocessArticleContent(content: string): string {
     const dContent = removeReadArticleHeader(content);
-    console.log('dContent', dContent);
+    console.log("dContent", dContent);
 
-    const startIndex = 0
-    const endIndex = dContent.indexOf('<h3>练习题目</h3>');
+    const startIndex = 0;
+    const endIndex = dContent.indexOf("<h3>练习题目</h3>");
 
     if (endIndex === -1) {
-        return ''; // 如果找不到关键标签,返回空字符串
+        return ""; // 如果找不到关键标签,返回空字符串
     }
 
     return dContent.slice(startIndex, endIndex);
 }
 
 function removeReadArticleHeader(content: string): string {
-    if (content.startsWith('<h3>阅读文章</h3>')) {
-        return content.slice('<h3>阅读文章</h3>'.length);
+    if (content.startsWith("<h3>阅读文章</h3>")) {
+        return content.slice("<h3>阅读文章</h3>".length);
     }
     return content;
 }

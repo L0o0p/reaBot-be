@@ -388,7 +388,7 @@ export class ArticleService {
     }
   }
   //接收前端doc文档并存储在本地数据库
-  async save_articleFile(file: Express.Multer.File, id: string, tag: string, rawText: string): Promise<File> {
+  async save_articleFile(file: Express.Multer.File, id: string, tag: string, html: string, raw: string): Promise<File> {
     const match_article = file.originalname.split('.')[0]; // 用doc名称命名
     console.log('match_article:', match_article);
     let existArticle = await this.findByArticleTitle(match_article);
@@ -396,8 +396,9 @@ export class ArticleService {
       console.log('不存在同名文章');
       const article = {
         title: match_article || 'article_created_by_doc',
-        content: rawText,
-        library_id: id
+        content: html,
+        library_id: id,
+        content_raw: raw
       };
       existArticle = await this.create(article);
       console.log('创建文章成功');
