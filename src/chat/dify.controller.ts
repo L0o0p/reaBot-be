@@ -31,7 +31,7 @@ export class DifyController {
   ): Promise<chatFeedback> {
     // console.log("reqds",req.user.user);
     console.log('req.user.user', req.user.userId);
-    return await this.appService.sendInfo(info.information, req.user, info.ifUseConversation_id);
+    return this.appService.sendInfo(info.information, req.user, info.ifUseConversation_id);
   }
 
   // 从本地获取机器人正在使用的知识库对应的文章

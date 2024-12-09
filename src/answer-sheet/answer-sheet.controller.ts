@@ -239,6 +239,20 @@ export class AnswerSheetController {
     }
   }
 
+  @Get("timeCalculation")
+  async timeCalculation(@Req() req: {
+    user: {
+      id: number;
+      userId: number;
+      username: string;
+    };
+  }) {
+    const progress = await this.paperService.getProgress(req.user.userId);
+    this.answerSheetRepository.update({
+      id: progress.currentAnserSheetID,
+    }, {});
+  }
+
   @Get("nextPaper")
   async startPaper(@Req() req: {
     user: {
@@ -247,7 +261,17 @@ export class AnswerSheetController {
       username: string;
     };
   }): Promise<PaperReadingTimeFullInfo | PaperReadingTime> {
-    const nextPaper = await this.paperService.getNextPaper(req.user.userId);
+
+    
+    const progress = await this.paperService.getProgress(
+      req.user.userId,
+    );
+    await this.paperService.estimateTime(
+      progress.currentAnserSheetID,
+      progress.lastArticle.id,
+    );
+
+    const nextPaper = await this.paperService.getNextPaper(progress?.lastPaperID);
     const paperId = nextPaper.id;
 
     const botId =
@@ -259,6 +283,7 @@ export class AnswerSheetController {
       botId,
       nextLibraryId,
     );
+    await this.userService.destroyConversationId(req.user.userId);
     try {
       let answerSheet = await this.answerSheetService
         .getAnswerSheetByPaperAndUserId(paperId, req.user.userId);
@@ -297,6 +322,10 @@ export class AnswerSheetController {
       const progress = await this.paperService.getProgress(
         req.user.userId,
       );
+      await this.paperService.estimateTime(
+        progress.currentAnserSheetID,
+        progress.lastArticle.id,
+      );
       const paper = await this.paperService.findPaperB(
         progress.lastPaperID,
       );
@@ -310,6 +339,7 @@ export class AnswerSheetController {
         botId,
         nextLibraryId,
       );
+      await this.userService.destroyConversationId(req.user.userId);
 
       let answerSheet = await this.answerSheetService
         .getAnswerSheetByPaperAndUserId(paper.id, req.user.userId);

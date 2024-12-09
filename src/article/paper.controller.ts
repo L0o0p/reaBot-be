@@ -189,6 +189,7 @@ export class PaperController {
                 currentArticleKey: lastestArticleProgress.currentArticleKey,
                 currentQuestionNum: lastestArticleProgress.currentQuestionNum,
             };
+
             return {
                 currentPaper,
                 progress,
@@ -210,6 +211,16 @@ export class PaperController {
                 currentArticleKey: "A",
                 currentQuestionNum: 0,
             };
+            // 切换知识库
+            const botId =
+                (await this.userService.getBotIdByUserId(req.user.userId))
+                    .bot_id;
+            const libraryId = currentPaper.articleA.library_id;
+            const result = await this.chatService.changeSourceLibrary(
+                botId,
+                libraryId,
+            );
+            await this.userService.destroyConversationId(req.user.userId);
             return {
                 currentPaper,
                 progress,

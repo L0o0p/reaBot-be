@@ -243,12 +243,14 @@ export class PaperService {
 
     // 计算文章阅读时间
     // 触发时机：当用户提交答案时，触发这个函数
-    async estimateTime(userId: number): Promise<any> {
-        const progress = await this.getProgress(userId);
+    async estimateTime(
+        currentAnserSheetID: number,
+        lastArticleID: number,
+    ): Promise<any> {
         // const answerSheet = await this.answerSheetService
         //     .getAnswerSheetByPaperAndUserId(paperId, userId);
         const answerSheet = await this.answerSheetRepository.findOneOrFail({
-            where: { id: progress.currentAnserSheetID },
+            where: { id: currentAnserSheetID },
             relations: { paper: true },
         });
         // 取articleAStartedAt、articleAFinishedAt
@@ -261,9 +263,7 @@ export class PaperService {
         // return { endPoint, startPoint }
         const timeTaken: string = calculateTiming(articleAStartedAt);
         const lastArticleIsAorB =
-            progress.lastArticle.id === answerSheet.paper.articleA.id
-                ? "A"
-                : "B";
+            lastArticleID === answerSheet.paper.articleAId ? "A" : "B";
         await this.recordTimeToken(timeTaken, lastArticleIsAorB, answerSheet);
 
         return timeTaken;
@@ -307,7 +307,7 @@ export class PaperService {
             },
             relations: {
                 question: true, // 明确加载question关联
-                answerSheet: true
+                answerSheet: true,
             },
             order: {
                 question: {
@@ -545,7 +545,7 @@ export class PaperService {
     }
 
     // 接收请求 查询即将开始的试卷
-    async getNextPaper(userId: number) {
+    async getNextPaper(lastPaperID?: number) {
         // 知道现在的article ⬇️
         // const currentArticle_id =
         //     (await this.articleService.getPropertyArticle(userId)).id;
@@ -556,10 +556,10 @@ export class PaperService {
         //         { articleBId: currentArticle_id },
         //     ],
         // })).id;
-        const progress = await this.getProgress(userId);
+        // const progress = await this.getProgress(userId);
         let nextPaperId;
-        if (progress) {
-            nextPaperId = await this.findNextMinId(progress.lastPaperID);
+        if (lastPaperID) {
+            nextPaperId = await this.findNextMinId(lastPaperID);
         } else {
             nextPaperId = await this.getPaperWithSmallestId();
         }
