@@ -318,18 +318,18 @@ export class AnswerSheetController {
       username: string;
     };
   }) {
-    try {
+    try {// 获取最新进度知道当前的Article
       const progress = await this.paperService.getProgress(
         req.user.userId,
       );
       await this.paperService.estimateTime(
         progress.currentAnserSheetID,
         progress.lastArticle.id,
-      );
+      );// 获取下一个Article
       const paper = await this.paperService.findPaperB(
         progress.lastPaperID,
       );
-
+      // 根据当前机器人ID
       const botId =
         (await this.userService.getBotIdByUserId(req.user.userId)).bot_id;
 

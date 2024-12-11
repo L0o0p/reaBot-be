@@ -209,21 +209,21 @@ export class ArticleController {
 
     // 将doc内容中的「练习题目」「阅读文章」「跟踪练习」分开
     const procceedText = await this.uploadService.processText(rawText);
-    // 将「阅读文章」分段上传
-    console.log("procceedText", procceedText);
-    const chunks = procceedText.articleText.split("\n\n");
-    chunks.forEach(async (chunk: string, index: number) => {
-      const title = (index < 1)
-        ? `文章题目：${article_title}`
-        : `文章原文第${index}段`;
-      const text = {
-        title: title,
-        content: title + "\n" + chunk,
+    // 将「阅读文章」分段上传 (现在不上传文章本文了，本文在每次新conversation中提供）！
+    // console.log("procceedText", procceedText);
+    // const chunks = procceedText.articleText.split("\n\n");
+    // chunks.forEach(async (chunk: string, index: number) => {
+    //   const title = (index < 1)
+    //     ? `文章题目：${article_title}`
+    //     : `文章原文第${index}段`;
+    //   const text = {
+    //     title: title,
+    //     content: title + "\n" + chunk,
         
-      };
-      const feedback = await this.appService.createLibraryText(id, text);
-      console.log("feedbackXXX", feedback);
-    });
+    //   };
+    //   const feedback = await this.appService.createLibraryText(id, text);
+    //   console.log("feedbackXXX", feedback);
+    // });
 
     // 2. 处理doc中的article文本并储存文章（doc+内容文本）
     await this.uploadService.processArticle(file, rawText, id);
