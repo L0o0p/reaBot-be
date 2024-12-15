@@ -10,6 +10,7 @@ import { User } from "../users/entity/users.entity";
 import axios from "axios";
 import { ConfigService } from "@nestjs/config";
 import { AuthService } from "src/auth/auth.service";
+import { Message } from "./dify.dto";
 
 @Injectable()
 export class DifyService {
@@ -17,8 +18,8 @@ export class DifyService {
   public current_bot_config: {
     context_dbs: string[];
   } = {
-    context_dbs: [],
-  };
+      context_dbs: [],
+    };
   private logger = new Logger("DifyService");
   private DIFY_URL: string;
   @Inject(AuthService)
@@ -52,6 +53,7 @@ export class DifyService {
     }
     return null;
   }
+
   // 发送对话消息
   async sendInfo(
     information: string,
@@ -118,7 +120,7 @@ export class DifyService {
     await this.userRepository.save(user);
   }
   //给获取当前用户的聊天历史记录
-  async getChatlog(user) {
+  async getChatlog(user: { user?: { id: number; userId: number; username: string; }; userId?: any; }) {
     // userId -> User
     console.log("id", user);
     const user_found = await this.userRepository.findOne({
@@ -132,8 +134,7 @@ export class DifyService {
     console.log("找到对应的conversationId", conversationId);
     console.log("1");
 
-    const url =
-      `${this.DIFY_URL}/v1/messages?user=${username}&conversation_id=${conversationId}&limit=100&first_id=`;
+    const url = `${this.DIFY_URL}/v1/messages?user=${username}&conversation_id=${conversationId}&limit=100&first_id=`;
     const apiKey = await this.getBotKeyByUserId(user.userId); // Replace 'YOUR_API_KEY' with your actual API key
     console.log("apiKey", apiKey);
 
@@ -392,5 +393,65 @@ export class DifyService {
     const response = await fetch(url, options);
     const data = await response.json();
     return data;
+  }
+
+  // 获取同一个用户的所有conversationID
+  async getAllCoversationID(userID: number) {
+    const botId = await this.getBotIdByUserId(userID);
+    const difyUserToken = await this.authService.getCurrentToken();
+    const url = `${this.DIFY_URL}/console/api/apps/${botId}/chat-conversations?page=1&limit=10&start=2024-12-06%2000%3A00&end=2024-12-13%2023%3A59&sort_by=-created_at&annotation_status=all`
+
+    const feedback = await fetch(url, {
+      method: "GET", // 指定请求方法为 GET
+      headers: {
+        "Authorization": `Bearer ${difyUserToken}`, // 设置授权头，使用提供的 API 密钥
+        "Content-Type": "application/json", // 设置请求体的格式为 JSON
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          // 如果响应状态码不是 2xx，抛出一个错误
+          throw new Error("Network response was not ok");
+        }
+        return response.json(); // 解析 JSON 数据
+      })
+      .catch((error) => {
+        console.error("There was a problem with your fetch operation:", error); // 在控制台输出可能出现的错误
+        throw error; // 将错误向上抛出，以便调用者可以处理
+      });
+    console.log('feedbackX', feedback.data);
+    let conversationIDListOfUser: string[] = []
+    for (const item of feedback.data) {
+      conversationIDListOfUser.push(item.id)
+    }
+
+    return conversationIDListOfUser
+  }
+
+  async getHistoryChatlogByConversationIDs(
+    userID: number,
+    userName: string,
+    conversationIDListOfUser: string[]) {
+    const botID = await this.getBotIdByUserId(userID);
+    const difyUserToken = await this.authService.getCurrentToken();
+    let conversationsList: any[] = [];
+    for (const conversationID of conversationIDListOfUser) {
+      console.log('conversationID', conversationID);
+      const url = `${this.DIFY_URL}/console/api/apps/${botID}/chat-messages?conversation_id=${conversationID}&limit=10`
+      const conversation: [] = (await this.fetchData(url, difyUserToken)).data
+      conversationsList.push(...conversation)
+      return conversationsList
+    }
+  }
+
+  async getHistoryChatlog(userID: number, userName: string): Promise<Message[]> {
+    console.log('user', userID);
+    // 获取同一个用户的所有conversationID
+    const conversationIDListOfUser = await this.getAllCoversationID(userID);
+    console.log('conversationIDListOfUser', conversationIDListOfUser);
+    // 获取所有conversationID的chatlog
+    const chatlog = await this.getHistoryChatlogByConversationIDs(userID, userName, conversationIDListOfUser)
+
+    return chatlog
   }
 }

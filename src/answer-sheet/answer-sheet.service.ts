@@ -116,18 +116,23 @@ export class AnswerSheetService {
   }
 
   async findLatestAnswerSheet(userId: number): Promise<AnswerSheet | undefined> {
-    return this.answerSheetRepository.findOne({
+    return await this.answerSheetRepository.findOne({
       where: { user: { id: userId } },
       order: { createdAt: 'DESC' },
       relations: ['user', 'paper', 'answers'], // 加载关联实体，视具体需求而定
     });
   }
 
-  async checkFollowPapers(userId: number) {
-  }
-
-  async createStartTime() {
-    return
+  // 查所有答题卡
+   async findAllAnswerSheets(): Promise<AnswerSheet[]> {
+    return await this.answerSheetRepository.find();
+   }
+  
+  // 查某user答题卡
+  async findAnswerSheetsByUserID(userID:number): Promise<AnswerSheet[]> {
+    return await this.answerSheetRepository.find(
+       { where: { user: { id: userID } } }
+    );
   }
 
 }

@@ -75,6 +75,11 @@ export class UsersService {
     return await this.userRepository.findOne({ where: { username } });
   }
 
+  // 根据用户名搜索
+  async findByUserID(userID: number): Promise<User | undefined> {
+    return await this.userRepository.findOne({ where: { id: userID } });
+  }
+
   async createBot(CreateBot: CreateBot) {
     const difyUserToken = await this.authService.getCurrentToken()
     const url = `${this.DIFY_URL}/console/api/apps`

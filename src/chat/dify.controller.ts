@@ -1,10 +1,11 @@
 import { Body, Controller, Get, Param, Post, UseGuards, Req, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
-import { askForTips, BotFullInfo, chatFeedback, Chatlog, information } from './dify.dto';
+import { askForTips, BotFullInfo, chatFeedback, Chatlog, information, Message } from './dify.dto';
 import { DifyService } from './dify.service';
 import { Dify } from './dify.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { ArticleService } from 'src/article/article.service';
 import { UsersService } from 'src/users/users.service';
+import { EventTrackingService } from 'src/event-tracking/event-tracking.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -13,6 +14,7 @@ export class DifyController {
     private readonly appService: DifyService,
     private readonly articleService: ArticleService,
     private readonly userService: UsersService,
+    private readonly eventService: EventTrackingService,
   ) {
     // const current_database_id = this.appService.getCurrentDatabaseId();
   }
@@ -20,7 +22,12 @@ export class DifyController {
   // 发送聊天消息
   @Post('/send')
   async sendInformation(
-    @Body() info: information,
+    @Body() info: {
+      information: string
+      eventName: string
+      eventDescription: string
+      ifUseConversation_id?: boolean
+    },
     @Req() req: {
       user: {
         id: number;
@@ -31,6 +38,14 @@ export class DifyController {
   ): Promise<chatFeedback> {
     // console.log("reqds",req.user.user);
     console.log('req.user.user', req.user.userId);
+    await this.eventService.recordEvent({
+      functionName: info.eventName,
+      userId: req.user.userId,
+      functionDescription: info.eventDescription,
+      // conversationID: '',
+      // serverResponse: serverResponse,
+      // responseTime: responseTime
+    });
     return this.appService.sendInfo(info.information, req.user, info.ifUseConversation_id);
   }
 
@@ -102,7 +117,7 @@ export class DifyController {
   //   }
   // }
 
-  // 获取聊天记录
+  // 获取聊天记录（单次conversationID）
   @Get('/chatlog')
   async getChatlog(@Req() req: {
     user: {
@@ -118,4 +133,17 @@ export class DifyController {
     return this.appService.getChatlog(req.user);
   }
 
+  @Get('/history-chatlog')
+  async getHistoryChatlog(@Req() req: {
+    user: {
+      id: number;
+      userId: number;
+      username: string;
+    }
+  }): Promise<Message[]> {
+
+    return await this.appService.getHistoryChatlog(req.user.userId, req.user.username);
+  }
+
 }
+

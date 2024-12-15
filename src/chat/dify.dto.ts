@@ -13,6 +13,12 @@ export interface chatFeedback{
     answer: string
 }
 
+export interface Message {
+  id: string;
+  conversation_id: string;
+  query: string;
+  answer:string
+}
 
 interface State {
   '知识库id': string;

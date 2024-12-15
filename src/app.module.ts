@@ -32,6 +32,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { HttpModule } from '@nestjs/axios';
 import { TextPreprocessorService } from './article/upload.service';
+import { EventTrackingService } from './event-tracking/event-tracking.service';
+import { EventTrackingController } from './event-tracking/event-tracking.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -61,6 +63,7 @@ import { TextPreprocessorService } from './article/upload.service';
     UsersController,
     PaperController,
     AnswerSheetController,
+    EventTrackingController
   ],
   providers: [
     ArticleService,
@@ -71,7 +74,8 @@ import { TextPreprocessorService } from './article/upload.service';
     AnswerSheetService,
     JwtService,
     ConfigService,  // Register your implementation of ConfigService as a provider
-    TextPreprocessorService
+    TextPreprocessorService,
+    EventTrackingService
   ],
 })
 export class AppModule { }

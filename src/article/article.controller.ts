@@ -35,6 +35,7 @@ import {
   QuizResponse,
   TrackingQuestion,
 } from "./dto/article.dto";
+import { EventTrackingService } from "src/event-tracking/event-tracking.service";
 
 @UseGuards(JwtAuthGuard)
 @Controller("article")
@@ -44,6 +45,7 @@ export class ArticleController {
     private readonly appService: ArticleService,
     private readonly paperService: PaperService,
     private readonly chatService: DifyService,
+    private readonly eventService: EventTrackingService,
     private readonly uploadService: TextPreprocessorService,
     // private dataSource: DataSource,
     private userService: UsersService,
@@ -51,10 +53,14 @@ export class ArticleController {
       Question
     >,
     @InjectRepository(Article) private articleRepository: Repository<Article>,
-  ) {}
+  ) { }
 
   @Get("all")
   async getAllQuestions() {
+    // await this.eventService.recordEvent({
+    //   functionName: 'getAllQuestions',
+    //   userId: 123, // 示例用户ID
+    // });
     return await this.articleRepository.find() as ArticleCollection;
   }
 
